@@ -11,19 +11,32 @@ type CallMetaRow = {
 /** Campos mínimos de Recording de Twilio para enlazar con Call SID. */
 type RecordingItem = { sid: string; callSid?: string | null };
 
+function envTwilio(name: "TWILIO_ACCOUNT_SID" | "TWILIO_API_KEY" | "TWILIO_API_SECRET") {
+  return (process.env[name] ?? "").trim();
+}
+
 export async function getCallLogs(limit = 50) {
   const safeLimit = Math.min(1000, Math.max(1, Math.floor(Number(limit)) || 50));
   try {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const apiKey = process.env.TWILIO_API_KEY;
-    const apiSecret = process.env.TWILIO_API_SECRET;
+    const accountSid = envTwilio("TWILIO_ACCOUNT_SID");
+    const apiKey = envTwilio("TWILIO_API_KEY");
+    const apiSecret = envTwilio("TWILIO_API_SECRET");
 
     if (!accountSid || !apiKey || !apiSecret) {
       throw new Error("Faltan TWILIO_ACCOUNT_SID, TWILIO_API_KEY o TWILIO_API_SECRET en el servidor.");
     }
 
+    if (!accountSid.startsWith("AC")) {
+      throw new Error("TWILIO_ACCOUNT_SID debe empezar por AC (Account SID de la consola).");
+    }
+
     const client = twilio(apiKey, apiSecret, { accountSid });
     const calls = await client.calls.list({ limit: safeLimit });
+    console.log("[TWILIO_CALLS_LIST]", {
+      count: calls.length,
+      accountSuffix: accountSid.slice(-6),
+      limit: safeLimit,
+    });
 
     let recordings: RecordingItem[] = [];
     try {
