@@ -97,8 +97,8 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Sidebar */}
       <div className="w-64 border-r flex flex-col bg-white">
         {/* Logo */}
-        <div className="h-20 flex items-center justify-center px-6 border-b" style={{ backgroundColor: '#03091D' }}>
-          <img src={logoThinkia} alt="Thinkia" className="h-10" />
+        <div className="h-20 flex items-center justify-center px-6 border-b">
+          <img src={logoThinkia} alt="Thinkia" className="h-10" style={{ filter: 'invert(1) brightness(0.2)' }} />
         </div>
 
         {/* Menu Items */}
