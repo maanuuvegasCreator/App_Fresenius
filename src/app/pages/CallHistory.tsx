@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchAgents, fetchCalls } from '@/lib/api-client';
+import { DEMO_BACKEND_CALLS } from '@/lib/demo-backend-calls';
 import type { BackendCall } from '@/types/backend';
+
+const USE_LIVE_CALLS = import.meta.env.VITE_USE_LIVE_CALLS === 'true';
 import { buildContactsFromCalls, mapAgentsToTeammates, mapToHistoryCalls } from '@/lib/call-mappers';
 import type { HistoryCall } from '@/lib/call-mappers';
 import {
@@ -103,12 +106,24 @@ export default function CallHistory() {
   const [isIntegrationsExpanded, setIsIntegrationsExpanded] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
+  const [rawCalls, setRawCalls] = useState<BackendCall[]>(() =>
+    USE_LIVE_CALLS ? [] : DEMO_BACKEND_CALLS
+  );
   const [teammatesState, setTeammatesState] = useState<Contact[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!USE_LIVE_CALLS) {
+        if (!cancelled) setRawCalls(DEMO_BACKEND_CALLS);
+        try {
+          const agents = await fetchAgents();
+          if (!cancelled) setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
+        } catch {
+          if (!cancelled) setTeammatesState([]);
+        }
+        return;
+      }
       try {
         const [c, agents] = await Promise.all([fetchCalls(500), fetchAgents()]);
         if (!cancelled) {

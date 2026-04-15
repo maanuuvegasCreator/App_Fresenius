@@ -9,8 +9,11 @@ import { ContactList } from '../components/ContactList';
 import { CallHistory } from '../components/CallHistory';
 import { StatusSelector } from '../components/StatusSelector';
 import { fetchCalls } from '@/lib/api-client';
+import { DEMO_BACKEND_CALLS } from '@/lib/demo-backend-calls';
 import { buildContactsFromCalls, mapToHistoryCalls } from '@/lib/call-mappers';
 import type { BackendCall } from '@/types/backend';
+
+const USE_LIVE_CALLS = import.meta.env.VITE_USE_LIVE_CALLS === 'true';
 
 type DashboardContact = {
   id: string;
@@ -63,11 +66,17 @@ export function Dashboard() {
   const [activePhone, setActivePhone] = useState('');
   const [activeView, setActiveView] = useState<'dialpad' | 'contacts' | 'history'>('dialpad');
   const [userStatus, setUserStatus] = useState<'available' | 'busy' | 'away'>('available');
-  const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
+  const [rawCalls, setRawCalls] = useState<BackendCall[]>(() =>
+    USE_LIVE_CALLS ? [] : DEMO_BACKEND_CALLS
+  );
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!USE_LIVE_CALLS) {
+        if (!cancelled) setRawCalls(DEMO_BACKEND_CALLS);
+        return;
+      }
       try {
         const c = await fetchCalls(300);
         if (!cancelled) setRawCalls(c);

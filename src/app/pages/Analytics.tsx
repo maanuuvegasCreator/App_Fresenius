@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchAgents, fetchCalls } from '@/lib/api-client';
+import { DEMO_BACKEND_CALLS } from '@/lib/demo-backend-calls';
 import { buildAnalyticsCharts } from '@/lib/analytics-from-calls';
 import type { AgentRow, BackendCall } from '@/types/backend';
 import {
@@ -21,6 +22,8 @@ import {
 
 type ViewType = 'supervisor' | 'agent';
 type SubTab = 'global' | 'inbound' | 'outbound';
+
+const USE_LIVE_CALLS = import.meta.env.VITE_USE_LIVE_CALLS === 'true';
 
 // Colores exactos del HTML original
 const B4 = '#3B6CFF';  // Blue 4
@@ -209,12 +212,24 @@ export default function Analytics() {
   const [subTab, setSubTab] = useState<SubTab>('global');
   const [capacityPeriod, setCapacityPeriod] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [selectedAgent, setSelectedAgent] = useState<string>('todos');
-  const [apiCalls, setApiCalls] = useState<BackendCall[]>([]);
+  const [apiCalls, setApiCalls] = useState<BackendCall[]>(() =>
+    USE_LIVE_CALLS ? [] : DEMO_BACKEND_CALLS
+  );
   const [apiAgents, setApiAgents] = useState<AgentRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!USE_LIVE_CALLS) {
+        if (!cancelled) setApiCalls(DEMO_BACKEND_CALLS);
+        try {
+          const a = await fetchAgents();
+          if (!cancelled) setApiAgents(a);
+        } catch {
+          if (!cancelled) setApiAgents([]);
+        }
+        return;
+      }
       try {
         const [c, a] = await Promise.all([fetchCalls(2000), fetchAgents()]);
         if (!cancelled) {

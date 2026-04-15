@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchAgents, fetchCalls } from '@/lib/api-client';
+import { DEMO_BACKEND_CALLS } from '@/lib/demo-backend-calls';
 import type { BackendCall } from '@/types/backend';
+
+const USE_LIVE_CALLS = import.meta.env.VITE_USE_LIVE_CALLS === 'true';
 import {
   buildContactsFromCalls,
   mapAgentsToTeammates,
@@ -55,7 +58,9 @@ interface Contact {
 }
 
 export function CallCenter() {
-  const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
+  const [rawCalls, setRawCalls] = useState<BackendCall[]>(() =>
+    USE_LIVE_CALLS ? [] : DEMO_BACKEND_CALLS
+  );
   const [teammatesState, setTeammatesState] = useState<Contact[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -63,6 +68,21 @@ export function CallCenter() {
     let cancelled = false;
     (async () => {
       setLoadError(null);
+      const agentsP = fetchAgents().then(
+        (agents) => {
+          if (!cancelled) setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
+        },
+        () => {
+          if (!cancelled) setTeammatesState([]);
+        }
+      );
+
+      if (!USE_LIVE_CALLS) {
+        if (!cancelled) setRawCalls(DEMO_BACKEND_CALLS);
+        await agentsP;
+        return;
+      }
+
       const callsP = fetchCalls(500).then(
         (calls) => {
           if (!cancelled) setRawCalls(calls);
@@ -72,14 +92,6 @@ export function CallCenter() {
             setRawCalls([]);
             setLoadError(e instanceof Error ? e.message : "No se pudieron cargar las llamadas.");
           }
-        }
-      );
-      const agentsP = fetchAgents().then(
-        (agents) => {
-          if (!cancelled) setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
-        },
-        () => {
-          if (!cancelled) setTeammatesState([]);
         }
       );
       await Promise.all([callsP, agentsP]);
@@ -440,7 +452,7 @@ export function CallCenter() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {!loadError && callRecords.length === 0 ? (
+            {USE_LIVE_CALLS && !loadError && callRecords.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">No hay llamadas en esta cuenta</p>
                 <p className="mt-2">
