@@ -1,0 +1,542 @@
+
+<h2 class="sr-only">Dashboard Analytics Thikia con valores en todas las graficas</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.db{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f3f8}
+.nav{background:#fff;border-bottom:1.5px solid #e8eaf0;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:50px}
+.nav-brand{font-size:15px;font-weight:800;color:#03091D}
+.ntabs{display:flex;margin-left:24px}
+.ntab{font-size:12px;padding:0 14px;height:50px;display:flex;align-items:center;color:#6b7280;border-bottom:2.5px solid transparent;cursor:pointer;font-weight:500;gap:5px}
+.ntab.on{color:#3B6CFF;border-bottom-color:#3B6CFF;font-weight:700}
+.ico-s{width:22px;height:22px;background:#eef1fb;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.ico{width:28px;height:28px;background:#eef1fb;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.exp{background:#001963;color:#fff;font-size:11px;font-weight:700;padding:7px 14px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;gap:5px}
+.subnav{background:#fff;border-bottom:1px solid #eef0f6;padding:0 20px;display:flex}
+.stab{font-size:12px;padding:11px 16px;color:#6b7280;border-bottom:2px solid transparent;cursor:pointer;font-weight:500}
+.stab.on{color:#001963;border-bottom-color:#001963;font-weight:700}
+.fbar{padding:10px 20px;display:flex;align-items:center;gap:8px;background:#f2f3f8}
+.fp{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid #dde1ee;background:#fff;color:#6b7280;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+.fp.on{background:#001963;color:#fff;border-color:#001963}
+.wrap{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.g5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kc{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #eef0f6}
+.kl{font-size:10px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.kv{font-size:22px;font-weight:800;color:#03091D;line-height:1.1;margin-bottom:4px}
+.kd{font-size:10px;font-weight:600}
+.up{color:#16a34a}.dn{color:#dc2626}.nu{color:#9ca3af}
+.cc{background:#fff;border-radius:12px;padding:16px;border:1px solid #eef0f6}
+.ct{font-size:13px;font-weight:700;color:#03091D;margin-bottom:2px}
+.cs{font-size:11px;color:#9ca3af;margin-bottom:10px}
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280}
+.ld{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.sdiv{border-top:2.5px solid #3B6CFF;padding-top:14px;margin-top:6px}
+.slbl{font-size:10px;font-weight:800;color:#001963;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.bd{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.bg{background:#dcfce7;color:#15803d}.ba{background:#fef3c7;color:#92400e}.br{background:#fee2e2;color:#b91c1c}
+.pt{width:100%;border-collapse:collapse}
+.pt th{font-size:10px;color:#9ca3af;font-weight:700;padding:6px 8px;text-align:left;border-bottom:1px solid #f0f1f5;text-transform:uppercase;letter-spacing:.04em}
+.pt td{font-size:12px;color:#03091D;padding:7px 8px;border-bottom:1px solid #f8f9fb;vertical-align:middle}
+.orow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ot{flex:1;height:8px;background:#f0f1f5;border-radius:4px;overflow:hidden}
+.of{height:100%;border-radius:4px}
+</style>
+
+<div class="db">
+<div class="nav">
+  <div style="display:flex;align-items:center">
+    <span class="nav-brand">Analytics</span>
+    <div class="ntabs">
+      <div class="ntab on"><span class="ico-s"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3B6CFF" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Vista supervisor</div>
+      <div class="ntab"><span class="ico-s" style="background:#f4f5f9"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Vista agente</div>
+    </div>
+  </div>
+  <button class="exp"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Export</button>
+</div>
+<div class="subnav">
+  <div class="stab on">Vision global</div>
+  <div class="stab">Entrantes</div>
+  <div class="stab">Salientes</div>
+  <div class="stab">AI Voice Agent</div>
+</div>
+<div class="fbar">
+  <div class="fp on"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Hoy</div>
+</div>
+
+<div class="wrap">
+
+<!-- KPI ROW 1 -->
+<div class="g4">
+  <div class="kc"><div class="ico" style="margin-bottom:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B6CFF" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.08 5.18 2 2 0 015.07 3h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L9.09 10.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 17.92z"/></svg></div><p class="kl">Total llamadas</p><p class="kv">8,783</p><p class="kd up">↑ +16% vs periodo anterior</p></div>
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#e8f5e9"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><p class="kl">Llamadas entrantes</p><p class="kv">1,962</p><p class="kd dn">↓ -4.4% vs periodo anterior</p></div>
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#f0eeff"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5900FF" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><p class="kl">Tiempo conv. medio</p><p class="kv" style="font-size:18px">1:33 <span style="font-size:11px;font-weight:400;color:#9ca3af">min</span></p><p class="kd nu">Sin cambios</p></div>
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#eef1fb"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B6CFF" stroke-width="1.8"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg></div><p class="kl">Llamadas salientes</p><p class="kv">6,841</p><p class="kd up">↑ +9.9% vs periodo anterior</p></div>
+</div>
+
+<!-- KPI ROW 2 -->
+<div class="g5">
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#fef3c7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><p class="kl">Tiempo max. espera</p><p class="kv" style="font-size:18px">1:10 <span style="font-size:11px;font-weight:400;color:#9ca3af">min</span></p><p class="kd nu">Llamada mas larga</p></div>
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#fee2e2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.08 5.18 2 2 0 015.07 3h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L9.09 10.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 17.92z"/><line x1="1" y1="1" x2="23" y2="23"/></svg></div><p class="kl">Llamadas en espera</p><p class="kv" style="color:#dc2626">11</p><p class="kd dn">↑ +3 vs hace 1h</p></div>
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#eef1fb"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#001963" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><p class="kl">Agentes conectados</p><p class="kv">34</p><p class="kd nu">En el sistema ahora</p></div>
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#e8f5e9"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg></div><p class="kl">Agentes disponibles</p><p class="kv" style="color:#16a34a">4</p><p class="kd dn">↓ -2 vs hora anterior</p></div>
+  <div class="kc"><div class="ico" style="margin-bottom:10px;background:#f0eeff"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5900FF" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><p class="kl">ASA vel. respuesta</p><p class="kv" style="font-size:18px;color:#5900FF">28 <span style="font-size:11px;font-weight:400;color:#9ca3af">seg</span></p><p class="kd up">↓ -4s mejor que ayer</p></div>
+</div>
+
+<!-- SLA -->
+<div class="cc" style="display:flex;align-items:center;gap:20px;padding:18px 20px">
+  <div style="width:42px;height:42px;border-radius:11px;background:#eef1fb;flex-shrink:0;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B6CFF" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+  <div><p class="kl" style="margin-bottom:4px">Llamadas respondidas en menos de 179 segundos</p><p style="font-size:36px;font-weight:800;color:#3B6CFF;line-height:1">41.9%</p></div>
+  <div style="width:1px;height:48px;background:#eef0f6;flex-shrink:0"></div>
+  <div style="display:flex;gap:28px">
+    <div><p style="font-size:22px;font-weight:800;color:#03091D">43</p><p class="kl">SLA 17</p></div>
+    <div><p style="font-size:22px;font-weight:800;color:#dc2626">6</p><p class="kl">Abandonadas</p></div>
+  </div>
+</div>
+
+<!-- CHARTS ROW 1: semana + evolucion -->
+<div class="g2">
+  <div class="cc">
+    <p class="ct">Llamadas por dia de la semana</p>
+    <div class="leg">
+      <span class="li"><span class="ld" style="background:#3B6CFF"></span>Entrantes</span>
+      <span class="li"><span class="ld" style="background:#90ABFF"></span>Salientes</span>
+      <span class="li"><span class="ld" style="background:#8544FF"></span>Clasificadas</span>
+      <span class="li"><span style="width:14px;height:2px;background:#ea580c;border-radius:1px;display:inline-block;vertical-align:middle"></span><span style="width:5px;height:5px;background:#ea580c;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:2px"></span>% Perdidas</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px"><canvas id="C1"></canvas></div>
+  </div>
+  <div class="cc">
+    <div style="display:flex;justify-content:space-between;align-items:center"><p class="ct">Evolucion total de llamadas por dia</p><span style="font-size:10px;color:#9ca3af">Ultima semana</span></div>
+    <div class="leg" style="margin-top:6px">
+      <span class="li"><span class="ld" style="background:#3B6CFF"></span>Entrantes</span>
+      <span class="li"><span class="ld" style="background:#90ABFF"></span>Salientes</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px"><canvas id="C2"></canvas></div>
+  </div>
+</div>
+
+<!-- CHARTS ROW 2: historial combinado + abandono+agentes -->
+<div class="g2">
+  <div class="cc">
+    <p class="ct">Historial de llamadas por dia</p>
+    <div class="leg">
+      <span class="li"><span class="ld" style="background:#3B6CFF"></span>Entrantes</span>
+      <span class="li"><span class="ld" style="background:#8544FF"></span>Salientes</span>
+      <span class="li"><span class="ld" style="background:#C1A0FF"></span>No atendidas</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px"><canvas id="C3"></canvas></div>
+  </div>
+  <div class="cc">
+    <p class="ct">Tasa de abandono y agentes disponibles por dia</p>
+    <p class="cs">% abandono (izda.) — agentes disponibles (dcha.)</p>
+    <div class="leg">
+      <span class="li"><span style="width:14px;height:2px;background:#ea580c;border-radius:1px;display:inline-block;vertical-align:middle"></span><span style="width:5px;height:5px;background:#ea580c;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:2px"></span>% Abandono</span>
+      <span class="li"><span class="ld" style="background:#3B6CFF"></span>Agentes disponibles</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px"><canvas id="C45"></canvas></div>
+  </div>
+</div>
+
+<!-- MONITOR RT -->
+<div class="cc">
+  <p class="ct">Monitor de llamadas — Tiempo real</p>
+  <div class="leg">
+    <span class="li"><span class="ld" style="background:#3B6CFF"></span>Llamadas activas</span>
+    <span class="li"><span class="ld" style="background:#8544FF"></span>En espera</span>
+    <span class="li"><span style="width:14px;height:2px;background:#16a34a;border-radius:1px;display:inline-block;vertical-align:middle"></span><span style="width:5px;height:5px;background:#16a34a;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:2px"></span>Agentes disponibles</span>
+  </div>
+  <div style="position:relative;width:100%;height:170px"><canvas id="C6"></canvas></div>
+</div>
+
+<!-- RENDIMIENTO -->
+<div class="cc">
+  <p class="ct">Rendimiento de agentes</p>
+  <p class="cs">Metricas individuales del dia actual</p>
+  <table class="pt">
+    <thead><tr><th>Agente</th><th>Total</th><th>Atendidas</th><th>Vel. respuesta</th><th>Resolucion</th><th>Tendencia</th></tr></thead>
+    <tbody>
+      <tr><td>Agente 1</td><td>40</td><td>30</td><td>87.1s</td><td><span style="font-weight:700;color:#16a34a">87.1%</span> ↑</td><td><div style="width:64px;height:22px;position:relative"><canvas id="S1"></canvas></div></td></tr>
+      <tr><td>Agente 2</td><td>41</td><td>38</td><td>68s</td><td><span style="font-weight:700;color:#dc2626">79.5%</span> ↓</td><td><div style="width:64px;height:22px;position:relative"><canvas id="S2"></canvas></div></td></tr>
+      <tr><td>Agente 3</td><td>51</td><td>45</td><td>80.1s</td><td><span style="font-weight:700;color:#dc2626">71.0%</span> ↓</td><td><div style="width:64px;height:22px;position:relative"><canvas id="S3"></canvas></div></td></tr>
+      <tr><td>Agente 4</td><td>46</td><td>36</td><td>61.5s</td><td><span style="font-weight:700;color:#dc2626">71.2%</span> ↓</td><td><div style="width:64px;height:22px;position:relative"><canvas id="S4"></canvas></div></td></tr>
+      <tr><td>Agente 5</td><td>50</td><td>30</td><td>62.6s</td><td><span style="font-weight:700;color:#16a34a">91.6%</span> ↑</td><td><div style="width:64px;height:22px;position:relative"><canvas id="S5"></canvas></div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- AGENTES -->
+<div class="g2">
+  <div class="cc">
+    <p class="ct">Llamadas gestionadas por agente</p>
+    <p class="cs">Volumen total y tasa de atencion</p>
+    <div style="margin-top:4px" id="agMgd"></div>
+  </div>
+  <div class="cc">
+    <p class="ct">Llamadas abandonadas por agente</p>
+    <p class="cs">Volumen y % del total (126 total)</p>
+    <div id="agAban"></div>
+  </div>
+</div>
+
+<!-- CAPACIDAD -->
+<div class="sdiv">
+  <p class="slbl"><span class="ico-s"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#001963" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg></span>Gestion de capacidad de agentes</p>
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kc"><div class="ico" style="margin-bottom:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B6CFF" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg></div><p class="kl">Agentes en turno</p><p class="kv">34</p><p class="kd up">↑ +3 vs ayer</p></div>
+    <div class="kc"><div class="ico" style="margin-bottom:10px;background:#e8f5e9"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><p class="kl">Ocupacion media</p><p class="kv">72%</p><p class="kd nu">Sin cambios</p></div>
+    <div class="kc"><div class="ico" style="margin-bottom:10px;background:#fee2e2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><p class="kl">% Llamadas perdidas</p><p class="kv" style="color:#dc2626">8.4%</p><p class="kd dn">↑ +1.2pp vs ayer</p></div>
+    <div class="kc"><div class="ico" style="margin-bottom:10px;background:#fef3c7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><p class="kl">Franja critica</p><p class="kv" style="font-size:16px;color:#b45309">14–16h</p><p class="kd dn">91% ocup. — +4 ag. necesarios</p></div>
+  </div>
+
+  <div class="cc" style="margin-bottom:14px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+      <div><p class="ct">Distribucion horaria — recibidas, realizadas y % perdidas</p><p class="cs">Con columna diferenciada de agentes disponibles por franja</p></div>
+      <div style="display:flex;gap:6px">
+        <button class="fp on" id="fbH" onclick="swC('hoy',this)">Hoy</button>
+        <button class="fp" id="fbS" onclick="swC('semana',this)">Semana</button>
+        <button class="fp" id="fbM" onclick="swC('mes',this)">Mes</button>
+      </div>
+    </div>
+    <div class="leg">
+      <span class="li"><span class="ld" style="background:#3B6CFF"></span>Recibidas</span>
+      <span class="li"><span class="ld" style="background:#90ABFF"></span>Realizadas</span>
+      <span class="li"><span class="ld" style="background:#C1A0FF"></span>Agentes disp. (eje dcha.)</span>
+      <span class="li"><span style="width:14px;height:2px;background:#ea580c;border-radius:1px;display:inline-block;vertical-align:middle"></span><span style="width:6px;height:6px;background:#ea580c;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:2px"></span>% Perdidas (eje dcha.)</span>
+    </div>
+    <div style="position:relative;width:100%;height:280px"><canvas id="C9"></canvas></div>
+  </div>
+
+  <div class="g2">
+    <div class="cc">
+      <p class="ct">Ocupacion por franja</p><p class="cs">% tiempo en llamada activa</p>
+      <div class="orow"><span style="font-size:11px;font-weight:600;color:#03091D;min-width:50px">08–10h</span><div class="ot"><div class="of" style="width:55%;background:#90ABFF"></div></div><span style="font-size:11px;font-weight:700;color:#6b7280;min-width:34px;text-align:right">55%</span></div>
+      <div class="orow"><span style="font-size:11px;font-weight:600;color:#03091D;min-width:50px">10–12h</span><div class="ot"><div class="of" style="width:84%;background:#3B6CFF"></div></div><span style="font-size:11px;font-weight:700;color:#3B6CFF;min-width:34px;text-align:right">84%</span></div>
+      <div class="orow"><span style="font-size:11px;font-weight:600;color:#03091D;min-width:50px">12–14h</span><div class="ot"><div class="of" style="width:61%;background:#90ABFF"></div></div><span style="font-size:11px;font-weight:700;color:#6b7280;min-width:34px;text-align:right">61%</span></div>
+      <div class="orow"><span style="font-size:11px;font-weight:600;color:#03091D;min-width:50px">14–16h</span><div class="ot"><div class="of" style="width:91%;background:#001963"></div></div><span style="font-size:11px;font-weight:700;color:#dc2626;min-width:34px;text-align:right">91%</span></div>
+      <div class="orow"><span style="font-size:11px;font-weight:600;color:#03091D;min-width:50px">16–18h</span><div class="ot"><div class="of" style="width:78%;background:#3B6CFF"></div></div><span style="font-size:11px;font-weight:700;color:#3B6CFF;min-width:34px;text-align:right">78%</span></div>
+      <div class="orow"><span style="font-size:11px;font-weight:600;color:#03091D;min-width:50px">18–20h</span><div class="ot"><div class="of" style="width:44%;background:#90ABFF"></div></div><span style="font-size:11px;font-weight:700;color:#6b7280;min-width:34px;text-align:right">44%</span></div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f1f5;display:flex;gap:20px">
+        <div><p style="font-size:10px;color:#9ca3af">Franja critica</p><p style="font-size:13px;font-weight:800;color:#001963">14–16h</p></div>
+        <div><p style="font-size:10px;color:#9ca3af">Pico perdidas</p><p style="font-size:13px;font-weight:800;color:#dc2626">14.2%</p></div>
+        <div><p style="font-size:10px;color:#9ca3af">Deficit est.</p><p style="font-size:13px;font-weight:800;color:#03091D">+4 ag.</p></div>
+      </div>
+    </div>
+    <div class="cc">
+      <p class="ct">Detalle por franja horaria</p><p class="cs">Volumen, cobertura y estado</p>
+      <table class="pt">
+        <thead><tr><th>Franja</th><th>Recib.</th><th>Realiz.</th><th>Ag.</th><th>% Perd.</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td>08–09h</td><td>112</td><td>48</td><td>12</td><td>4.2%</td><td><span class="bd bg">OK</span></td></tr>
+          <tr><td>09–10h</td><td>198</td><td>67</td><td>11</td><td>6.1%</td><td><span class="bd bg">OK</span></td></tr>
+          <tr><td>10–11h</td><td>321</td><td>89</td><td>10</td><td>9.3%</td><td><span class="bd ba">Alerta</span></td></tr>
+          <tr><td>11–12h</td><td>287</td><td>74</td><td>9</td><td>8.7%</td><td><span class="bd ba">Alerta</span></td></tr>
+          <tr><td>12–13h</td><td>243</td><td>61</td><td>11</td><td>5.8%</td><td><span class="bd bg">OK</span></td></tr>
+          <tr><td>13–14h</td><td>189</td><td>52</td><td>10</td><td>4.9%</td><td><span class="bd bg">OK</span></td></tr>
+          <tr><td>14–15h</td><td>378</td><td>91</td><td>7</td><td>14.2%</td><td><span class="bd br">Critico</span></td></tr>
+          <tr><td>15–16h</td><td>355</td><td>87</td><td>6</td><td>12.8%</td><td><span class="bd br">Critico</span></td></tr>
+          <tr><td>16–17h</td><td>298</td><td>76</td><td>9</td><td>7.4%</td><td><span class="bd ba">Alerta</span></td></tr>
+          <tr><td>17–18h</td><td>267</td><td>69</td><td>10</td><td>6.9%</td><td><span class="bd ba">Alerta</span></td></tr>
+          <tr><td>18–19h</td><td>156</td><td>43</td><td>11</td><td>3.8%</td><td><span class="bd bg">OK</span></td></tr>
+          <tr><td>19–20h</td><td>98</td><td>31</td><td>12</td><td>2.1%</td><td><span class="bd bg">OK</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var B8='#03091D',B6='#001963',B4='#3B6CFF',B2='#90ABFF';
+var V='#5900FF',V4='#8544FF',V2='#C1A0FF';
+var OR='#ea580c',GR='#16a34a',RD='#dc2626';
+var GRD={color:'rgba(0,0,0,0.04)'};
+function TX(){return {font:{size:10},color:'#9ca3af'};}
+var DAYS=['Lun','Mar','Mie','Jue','Vie','Sab','Dom'];
+var HOURS=['08h','09h','10h','11h','12h','13h','14h','15h','16h','17h','18h','19h'];
+
+/* helper: pinta valores sobre barras apiladas en la cima */
+function paintStackTotals(chart, datasets, maxIdx){
+  var ctx=chart.ctx; ctx.save();
+  ctx.font='bold 10px -apple-system,sans-serif';
+  ctx.fillStyle='#03091D'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+  var labels=chart.data.labels;
+  labels.forEach(function(_,i){
+    var sum=0;
+    datasets.forEach(function(ds){ sum+=ds[i]||0; });
+    var meta=chart.getDatasetMeta(maxIdx);
+    if(meta.data[i]){ ctx.fillText(sum>=1000?(sum/1000).toFixed(1)+'k':sum, meta.data[i].x, meta.data[i].y-4); }
+  });
+  ctx.restore();
+}
+
+/* helper: pinta valor en cada segmento si cabe */
+function paintSegments(chart, dsIdx, color, minH){
+  var ctx=chart.ctx; ctx.save();
+  ctx.font='bold 10px -apple-system,sans-serif';
+  ctx.fillStyle=color||'#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  var meta=chart.getDatasetMeta(dsIdx);
+  meta.data.forEach(function(bar,i){
+    var h=bar.base-bar.y;
+    if(h>=(minH||18)){
+      var v=chart.data.datasets[dsIdx].data[i];
+      ctx.fillText(v>=1000?(v/1000).toFixed(1)+'k':v, bar.x, bar.y+h/2);
+    }
+  });
+  ctx.restore();
+}
+
+var capData={
+  hoy:{i:[112,198,321,287,243,189,378,355,298,267,156,98],o:[48,67,89,74,61,52,91,87,76,69,43,31],l:[4.2,6.1,9.3,8.7,5.8,4.9,14.2,12.8,7.4,6.9,3.8,2.1],a:[12,11,10,9,11,10,7,6,9,10,11,12]},
+  semana:{i:[620,980,1450,1320,1100,870,1780,1640,1350,1220,730,460],o:[210,310,420,370,295,240,440,405,355,320,200,145],l:[3.8,5.4,8.1,7.9,5.2,4.3,13.1,11.6,6.8,6.1,3.4,1.9],a:[12,11,10,9,11,10,7,6,9,10,11,12]},
+  mes:{i:[2480,3920,5800,5280,4400,3480,7120,6560,5400,4880,2920,1840],o:[840,1240,1680,1480,1180,960,1760,1620,1420,1280,800,580],l:[3.5,5.0,7.8,7.4,4.9,4.0,12.5,11.0,6.3,5.7,3.1,1.7],a:[12,11,10,9,11,10,7,6,9,10,11,12]}
+};
+var capChart=null;
+
+function buildCap(f){
+  var d=capData[f], el=document.getElementById('C9');
+  if(!el)return;
+  if(capChart)capChart.destroy();
+  capChart=new Chart(el,{
+    data:{labels:HOURS,datasets:[
+      {type:'bar',label:'Recibidas',data:d.i,backgroundColor:B4,borderRadius:3,yAxisID:'y',stack:'calls'},
+      {type:'bar',label:'Realizadas',data:d.o,backgroundColor:B2,borderRadius:3,yAxisID:'y',stack:'calls'},
+      {type:'bar',label:'Agentes',data:d.a,backgroundColor:V2,borderRadius:3,yAxisID:'y2',stack:'agents',barPercentage:0.4},
+      {type:'line',label:'% Perdidas',data:d.l,borderColor:OR,backgroundColor:'rgba(234,88,12,0.05)',pointBackgroundColor:OR,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,borderWidth:2.5,tension:0.4,fill:false,yAxisID:'y3'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:B6,titleColor:'#fff',bodyColor:B2,padding:10,cornerRadius:8,
+        callbacks:{label:function(c){
+          if(c.dataset.label==='% Perdidas')return ' % Perdidas: '+c.raw.toFixed(1)+'%';
+          if(c.dataset.label==='Agentes')return ' Agentes disp.: '+c.raw;
+          return ' '+c.dataset.label+': '+c.raw.toLocaleString();
+        }}}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{autoSkip:false,font:{size:10},color:'#9ca3af'}},
+        y:{position:'left',stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},color:'#9ca3af',callback:function(v){return v>=1000?(v/1000).toFixed(1)+'k':v;}},title:{display:true,text:'Llamadas',font:{size:10},color:'#9ca3af'}},
+        y2:{position:'right',stacked:true,min:0,max:20,grid:{drawOnChartArea:false},ticks:{font:{size:10},color:V4,callback:function(v){return v+' ag';}},title:{display:true,text:'Agentes',font:{size:10},color:V4}},
+        y3:{position:'right',min:0,max:20,grid:{drawOnChartArea:false},ticks:{font:{size:10},color:OR,callback:function(v){return v+'%';},display:false},title:{display:false}}
+      },
+      animation:{onComplete:function(){
+        /* valores sobre barras recibidas+realizadas */
+        var ctx=capChart.ctx; ctx.save();
+        ctx.font='bold 9px -apple-system,sans-serif'; ctx.fillStyle='#fff';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        [0,1].forEach(function(dsIdx){
+          var meta=capChart.getDatasetMeta(dsIdx);
+          meta.data.forEach(function(bar,i){
+            var h=bar.base-bar.y;
+            if(h>=14){
+              var v=capChart.data.datasets[dsIdx].data[i];
+              ctx.fillText(v,bar.x,bar.y+h/2);
+            }
+          });
+        });
+        /* valor sobre columna agentes */
+        var metaAg=capChart.getDatasetMeta(2);
+        ctx.fillStyle=V;
+        ctx.font='bold 10px -apple-system,sans-serif';
+        metaAg.data.forEach(function(bar,i){
+          var v=capChart.data.datasets[2].data[i];
+          ctx.fillText(v,bar.x,bar.y-5);
+        });
+        ctx.restore();
+      }}
+    }
+  });
+}
+
+function swC(f,btn){
+  document.querySelectorAll('#fbH,#fbS,#fbM').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on'); buildCap(f);
+}
+
+function initAll(){
+
+  /* C1 — semana con valores en segmentos + linea perdidas */
+  var c1inb=[180,240,230,220,200,80,60];
+  var c1sal=[60,80,70,75,65,30,20];
+  var c1cls=[20,30,25,28,22,12,8];
+  var c1=new Chart(document.getElementById('C1'),{
+    data:{labels:DAYS,datasets:[
+      {type:'bar',label:'Entrantes',data:c1inb,backgroundColor:B4,borderRadius:3,stack:'a',yAxisID:'y'},
+      {type:'bar',label:'Salientes',data:c1sal,backgroundColor:B2,borderRadius:3,stack:'a',yAxisID:'y'},
+      {type:'bar',label:'Clasificadas',data:c1cls,backgroundColor:V4,borderRadius:3,stack:'a',yAxisID:'y'},
+      {type:'line',label:'% Perdidas',data:[3.1,4.2,5.8,4.9,5.2,2.1,1.4],borderColor:OR,backgroundColor:'rgba(234,88,12,0.06)',
+        pointBackgroundColor:OR,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,borderWidth:2,tension:0.4,fill:false,yAxisID:'y2'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:B6,titleColor:'#fff',bodyColor:B2,padding:8,cornerRadius:8}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:TX()},y:{stacked:true,grid:GRD,ticks:TX()},
+        y2:{position:'right',grid:{drawOnChartArea:false},min:0,max:10,ticks:{font:{size:10},color:OR,callback:function(v){return v+'%';}}}},
+      animation:{onComplete:function(){
+        paintSegments(c1,0,'#fff',14);
+        paintSegments(c1,1,'#fff',14);
+        paintSegments(c1,2,'#fff',14);
+        paintStackTotals(c1,[c1inb,c1sal,c1cls],2);
+      }}}
+  });
+
+  /* C2 — evolucion con totales encima */
+  var c2inb=[1304,1942,1524,1663,768], c2sal=[400,600,480,520,240];
+  var c2=new Chart(document.getElementById('C2'),{type:'bar',
+    data:{labels:['Mar 9','Mar 10','Mar 11','Mar 12','Mar 13'],datasets:[
+      {label:'Entrantes',data:c2inb,backgroundColor:B4,borderRadius:4,stack:'a'},
+      {label:'Salientes',data:c2sal,backgroundColor:B2,borderRadius:4,stack:'a'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:B6,titleColor:'#fff',bodyColor:B2,padding:8,cornerRadius:8}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:TX()},y:{stacked:true,grid:GRD,max:3200,
+        ticks:{font:{size:10},color:'#9ca3af',callback:function(v){return v>=1000?(v/1000).toFixed(1)+'k':v;}}}},
+      animation:{onComplete:function(){
+        paintSegments(c2,0,'#fff',18);
+        paintSegments(c2,1,'#fff',14);
+        paintStackTotals(c2,[c2inb,c2sal],1);
+      }}}
+  });
+
+  /* C3 — historial con entrantes + salientes + no atendidas en una sola barra */
+  var c3inb=[283,312,298,271,265,75,42];
+  var c3sal=[98,112,104,95,90,28,15];
+  var c3no=[28,22,31,19,24,8,5];
+  var c3=new Chart(document.getElementById('C3'),{type:'bar',
+    data:{labels:DAYS,datasets:[
+      {label:'Entrantes',data:c3inb,backgroundColor:B4,borderRadius:3,stack:'a'},
+      {label:'Salientes',data:c3sal,backgroundColor:V4,borderRadius:3,stack:'a'},
+      {label:'No atendidas',data:c3no,backgroundColor:V2,borderRadius:3,stack:'a'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:B6,titleColor:'#fff',bodyColor:B2,padding:8,cornerRadius:8}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:TX()},y:{stacked:true,grid:GRD,
+        ticks:{font:{size:10},color:'#9ca3af'}}},
+      animation:{onComplete:function(){
+        paintSegments(c3,0,'#fff',14);
+        paintSegments(c3,1,'#fff',14);
+        paintSegments(c3,2,'#fff',12);
+        paintStackTotals(c3,[c3inb,c3sal,c3no],2);
+      }}}
+  });
+
+  /* C45 — abandono + agentes con valores */
+  var c45ag=[18,22,20,24,19,8,4];
+  var c45=new Chart(document.getElementById('C45'),{
+    data:{labels:DAYS,datasets:[
+      {type:'bar',label:'Agentes disponibles',data:c45ag,backgroundColor:'rgba(59,108,255,0.15)',borderColor:B4,borderWidth:1,borderRadius:4,yAxisID:'y2'},
+      {type:'line',label:'% Abandono',data:[5.2,4.8,6.1,5.4,5.9,3.2,2.1],
+        borderColor:OR,backgroundColor:'rgba(234,88,12,0.07)',
+        pointBackgroundColor:OR,pointBorderColor:'#fff',pointBorderWidth:2,
+        pointRadius:6,borderWidth:2.5,tension:0.4,fill:true,yAxisID:'y'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:B6,titleColor:'#fff',bodyColor:B2,padding:8,cornerRadius:8,
+        callbacks:{label:function(c){
+          if(c.dataset.label==='% Abandono')return ' % Abandono: '+c.raw.toFixed(1)+'%';
+          return ' Agentes disp.: '+c.raw;
+        }}}},
+      scales:{x:{grid:{display:false},ticks:TX()},
+        y:{position:'left',grid:GRD,min:0,max:10,ticks:{font:{size:10},color:OR,callback:function(v){return v+'%';}}},
+        y2:{position:'right',grid:{drawOnChartArea:false},min:0,max:30,ticks:{font:{size:10},color:B4}}},
+      animation:{onComplete:function(){
+        /* numero agentes encima de cada barra */
+        var ctx=c45.ctx; ctx.save();
+        ctx.font='bold 10px -apple-system,sans-serif'; ctx.fillStyle=B6;
+        ctx.textAlign='center'; ctx.textBaseline='bottom';
+        var meta=c45.getDatasetMeta(0);
+        meta.data.forEach(function(bar,i){
+          ctx.fillText(c45ag[i],bar.x,bar.y-3);
+        });
+        /* valor % en cada punto de la linea */
+        ctx.fillStyle=OR; ctx.textBaseline='top';
+        var metaL=c45.getDatasetMeta(1);
+        metaL.data.forEach(function(pt,i){
+          ctx.fillText(c45.data.datasets[1].data[i].toFixed(1)+'%',pt.x,pt.y+5);
+        });
+        ctx.restore();
+      }}}
+  });
+
+  /* C6 — monitor RT con agentes como linea */
+  var c6ag=[12,10,9,8,10,11,7,6,9,10,12];
+  var c6=new Chart(document.getElementById('C6'),{
+    data:{labels:['8h','9h','10h','11h','12h','13h','14h','15h','16h','17h','18h'],datasets:[
+      {type:'bar',label:'Activas',data:[22,35,42,38,28,24,45,41,32,27,18],backgroundColor:B4,borderRadius:3,stack:'a',yAxisID:'y'},
+      {type:'bar',label:'En espera',data:[4,8,11,9,5,4,14,12,7,6,3],backgroundColor:V4,borderRadius:3,stack:'a',yAxisID:'y'},
+      {type:'line',label:'Agentes disponibles',data:c6ag,borderColor:GR,backgroundColor:'rgba(22,163,74,0.06)',
+        pointBackgroundColor:GR,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,borderWidth:2,tension:0.4,fill:false,yAxisID:'y2'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:B6,titleColor:'#fff',bodyColor:B2,padding:8,cornerRadius:8}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:TX()},
+        y:{stacked:true,position:'left',grid:GRD,ticks:TX()},
+        y2:{position:'right',grid:{drawOnChartArea:false},min:0,max:20,ticks:{font:{size:10},color:GR}}
+      },
+      animation:{onComplete:function(){
+        var ctx=c6.ctx; ctx.save();
+        /* valores en segmentos */
+        ctx.font='bold 10px -apple-system,sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        [0,1].forEach(function(di){
+          var meta=c6.getDatasetMeta(di);
+          meta.data.forEach(function(bar,i){
+            var h=bar.base-bar.y;
+            if(h>=14){ ctx.fillText(c6.data.datasets[di].data[i],bar.x,bar.y+h/2); }
+          });
+        });
+        /* numero agentes en cada punto linea */
+        ctx.fillStyle=GR; ctx.textBaseline='bottom';
+        var metaG=c6.getDatasetMeta(2);
+        metaG.data.forEach(function(pt,i){
+          ctx.fillText(c6ag[i],pt.x,pt.y-5);
+        });
+        ctx.restore();
+      }}}
+  });
+
+  /* Sparklines */
+  [{id:'S1',d:[70,74,78,80,84,87],up:true},{id:'S2',d:[88,85,83,81,80,79],up:false},
+   {id:'S3',d:[80,77,74,72,71,71],up:false},{id:'S4',d:[78,75,73,72,71,71],up:false},
+   {id:'S5',d:[80,83,86,88,90,91],up:true}].forEach(function(s){
+    var el=document.getElementById(s.id); if(!el)return;
+    el.width=64; el.height=22;
+    new Chart(el,{type:'line',data:{labels:[0,1,2,3,4,5],datasets:[{data:s.d,borderColor:s.up?GR:RD,borderWidth:2,pointRadius:0,tension:0.4}]},
+      options:{responsive:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
+  });
+
+  /* Agentes gestionadas */
+  var ags=[{n:'Agente 1',t:148,a:118,c:B4},{n:'Agente 2',t:162,a:134,c:B4},{n:'Agente 3',t:105,a:82,c:V4},
+           {n:'Agente 4',t:89,a:68,c:V4},{n:'Agente 5',t:134,a:112,c:B4},{n:'Agente 6',t:97,a:74,c:V4},{n:'Agente 7',t:72,a:55,c:B2}];
+  var mx=162, html='';
+  ags.forEach(function(a){
+    var pct=Math.round(a.a/a.t*100), bw=Math.round(a.t/mx*100);
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+    html+='<span style="font-size:11px;font-weight:600;color:#03091D;min-width:58px">'+a.n+'</span>';
+    html+='<div style="flex:1;height:10px;background:#f0f1f5;border-radius:5px;overflow:hidden"><div style="width:'+bw+'%;height:100%;background:'+a.c+';border-radius:5px"></div></div>';
+    html+='<span style="font-size:11px;font-weight:700;color:#03091D;min-width:28px;text-align:right">'+a.t+'</span>';
+    html+='<span style="font-size:10px;font-weight:600;min-width:32px;text-align:right;color:'+(pct>=80?GR:'#b45309')+'">'+pct+'%</span>';
+    html+='</div>';
+  });
+  document.getElementById('agMgd').innerHTML=html;
+
+  /* Agentes abandonadas */
+  var ab=[{n:'Agente 1',v:32,p:25,c:B6},{n:'Agente 2',v:25,p:20,c:B4},{n:'Agente 3',v:22,p:17,c:V4},
+          {n:'Agente 4',v:21,p:17,c:V},{n:'Agente 5',v:18,p:14,c:B2},{n:'Agente 6',v:10,p:8,c:V2},{n:'Agente 7',v:8,p:6,c:'#9ca3af'}];
+  var htmlA='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
+  ab.forEach(function(a){
+    htmlA+='<div style="border-radius:10px;padding:12px 10px;border:1px solid #eef0f6;text-align:center">';
+    htmlA+='<p style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">'+a.n+'</p>';
+    htmlA+='<p style="font-size:24px;font-weight:800;color:'+a.c+';line-height:1;margin-bottom:2px">'+a.v+'</p>';
+    htmlA+='<p style="font-size:10px;color:#9ca3af;margin-bottom:8px">'+a.p+'% del total</p>';
+    htmlA+='<div style="height:4px;background:#f0f1f5;border-radius:2px;overflow:hidden"><div style="width:'+a.p+'%;height:100%;background:'+a.c+';border-radius:2px"></div></div>';
+    htmlA+='</div>';
+  });
+  htmlA+='</div>';
+  document.getElementById('agAban').innerHTML=htmlA;
+
+  buildCap('hoy');
+}
+
+setTimeout(initAll,300);
+</script>
