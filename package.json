@@ -2,6 +2,7 @@
   "name": "@figma/my-make-file",
   "private": true,
   "version": "0.0.1",
+  "packageManager": "pnpm@10.28.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n api,vite -c blue,green \"pnpm dev:api\" \"pnpm dev:vite\"",
