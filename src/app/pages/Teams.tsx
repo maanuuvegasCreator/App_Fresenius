@@ -27,7 +27,6 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { Label } from '../components/ui/label';
-import userIconImg from 'figma:asset/ab9b3cea4046b6e0767e46d26ba366f7d608008c.png';
 import { UserSettingsDialog } from '../components/UserSettingsDialog';
 
 interface TeamMember {

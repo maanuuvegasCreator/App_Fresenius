@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Upload, Bell, PhoneForwarded, Clock, Calendar } from 'lucide-react';
+import { ChevronLeft, Upload, Bell, PhoneForwarded, Clock, Calendar, UserCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import userIconImg from 'figma:asset/ab9b3cea4046b6e0767e46d26ba366f7d608008c.png';
 
 interface TeamMember {
   id: string;
@@ -196,7 +195,7 @@ export function UserSettingsDialog({ user, teams, onClose, onSave, onChangeRole,
                   >
                     <div className="flex items-start gap-3">
                       <div className="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                        <img src={userIconImg} alt="" className="h-6 w-6" />
+                        <UserCircle className="h-6 w-6 text-gray-400" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -224,7 +223,7 @@ export function UserSettingsDialog({ user, teams, onClose, onSave, onChangeRole,
                   >
                     <div className="flex items-start gap-3">
                       <div className="h-10 w-10 rounded-lg bg-teal-100 flex items-center justify-center flex-shrink-0">
-                        <img src={userIconImg} alt="" className="h-6 w-6" />
+                        <UserCircle className="h-6 w-6 text-gray-400" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -252,7 +251,7 @@ export function UserSettingsDialog({ user, teams, onClose, onSave, onChangeRole,
                   >
                     <div className="flex items-start gap-3">
                       <div className="h-10 w-10 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0">
-                        <img src={userIconImg} alt="" className="h-6 w-6" />
+                        <UserCircle className="h-6 w-6 text-gray-400" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">

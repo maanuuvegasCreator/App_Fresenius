@@ -16,7 +16,7 @@ import {
 import { cn } from './ui/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
-import logoThinkia from 'figma:asset/6da88b8c6a195d6d59783c90d2b9035e17ff056d.png';
+import logoThinkia from '../../imports/Logo_Thinkia_Light.svg';
 
 interface MainLayoutProps {
   children: ReactNode;
