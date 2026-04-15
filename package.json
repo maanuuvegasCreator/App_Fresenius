@@ -9,7 +9,9 @@
     "dev:vite": "vite",
     "dev:api": "tsx watch dev-server.ts",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "desktop:dev": "pnpm --dir desktop start",
+    "desktop:dist": "pnpm install --dir desktop && pnpm --dir desktop run dist"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

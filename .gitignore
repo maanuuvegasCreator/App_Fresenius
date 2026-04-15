@@ -32,3 +32,7 @@ dist-ssr
 
 # Routing / eventos fallback (dev)
 data/
+
+# Electron (solo carpeta desktop/)
+desktop/out/
+desktop/node_modules/

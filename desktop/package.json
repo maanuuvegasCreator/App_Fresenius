@@ -1,0 +1,39 @@
+{
+  "name": "thinkia-fresenius-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Thinkia Fresenius — ventana de escritorio (URL Vercel)",
+  "author": "Thinkia",
+  "main": "main.cjs",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "start": "electron .",
+    "dist": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable --publish never"
+  },
+  "build": {
+    "appId": "com.thinkia.fresenius.desktop",
+    "productName": "Thinkia Fresenius",
+    "copyright": "Fresenius Medical Care",
+    "forceCodeSigning": false,
+    "directories": {
+      "output": "out"
+    },
+    "files": ["main.cjs", "package.json"],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "Thinkia-Fresenius-${version}-win-x64-portable.${ext}"
+    },
+    "npmRebuild": false
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}
