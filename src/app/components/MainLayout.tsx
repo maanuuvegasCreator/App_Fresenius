@@ -95,7 +95,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="size-full flex bg-background">
       {/* Main Sidebar */}
-      <div className="w-64 border-r flex flex-col bg-white">
+      <div className="w-64 min-w-64 border-r flex flex-col bg-white flex-shrink-0">
         {/* Logo */}
         <div className="h-20 flex items-center justify-center px-6 border-b">
           <img src={logoThinkia} alt="Thinkia" className="h-10" style={{ filter: 'invert(1) brightness(0.2)' }} />
