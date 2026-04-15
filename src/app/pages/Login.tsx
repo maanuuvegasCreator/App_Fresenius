@@ -39,8 +39,12 @@ export function Login() {
           return;
         }
         navigate("/dashboard");
-      } catch {
-        setError("Configura VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY para login con Supabase, o usa credenciales mock.");
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "No se pudo iniciar sesión con Supabase. Comprueba variables en Vercel y vuelve a desplegar tras cambiarlas.";
+        setError(msg);
       }
     } finally {
       setIsLoading(false);
