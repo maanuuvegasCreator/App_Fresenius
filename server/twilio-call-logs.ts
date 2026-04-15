@@ -8,6 +8,9 @@ type CallMetaRow = {
   agent_identity?: string | null;
 };
 
+/** Campos mínimos de Recording de Twilio para enlazar con Call SID. */
+type RecordingItem = { sid: string; callSid?: string | null };
+
 export async function getCallLogs(limit = 50) {
   const safeLimit = Math.min(1000, Math.max(1, Math.floor(Number(limit)) || 50));
   try {
@@ -16,18 +19,28 @@ export async function getCallLogs(limit = 50) {
     const apiSecret = process.env.TWILIO_API_SECRET;
 
     if (!accountSid || !apiKey || !apiSecret) {
-      throw new Error("Faltan credenciales de Twilio.");
+      throw new Error("Faltan TWILIO_ACCOUNT_SID, TWILIO_API_KEY o TWILIO_API_SECRET en el servidor.");
     }
 
     const client = twilio(apiKey, apiSecret, { accountSid });
     const calls = await client.calls.list({ limit: safeLimit });
-    const recordings = await client.recordings.list({ limit: safeLimit });
 
-    const supabase = createApiClient();
-    const { data: metadata, error: metaError } = await supabase.from("call_metadata").select("*");
-    if (metaError) console.error("[METADATA_ERROR]", metaError);
+    let recordings: RecordingItem[] = [];
+    try {
+      recordings = (await client.recordings.list({ limit: safeLimit })) as RecordingItem[];
+    } catch (recErr) {
+      console.error("[TWILIO_RECORDINGS]", recErr);
+    }
 
-    const metaRows = (metadata ?? []) as CallMetaRow[];
+    let metaRows: CallMetaRow[] = [];
+    try {
+      const supabase = createApiClient();
+      const { data: metadata, error: metaError } = await supabase.from("call_metadata").select("*");
+      if (metaError) console.error("[METADATA_ERROR]", metaError);
+      metaRows = (metadata ?? []) as CallMetaRow[];
+    } catch (metaErr) {
+      console.error("[SUPABASE_METADATA]", metaErr);
+    }
 
     const mappedTwilio = calls.map((c) => {
       const rec = recordings.find((r) => r.callSid === c.sid);
@@ -63,7 +76,9 @@ export async function getCallLogs(limit = 50) {
             from: "ElevenLabs AI",
             to: c.agent_name || "Agente IA",
             status: c.status === "done" ? "completed" : c.status,
-            startTime: c.start_time_unix_secs ? new Date((c.start_time_unix_secs as number) * 1000).toISOString() : null,
+            startTime: c.start_time_unix_secs
+              ? new Date((c.start_time_unix_secs as number) * 1000).toISOString()
+              : null,
             duration: String(c.call_duration_secs ?? "0"),
             direction: "inbound",
             recordingUrl: `/api/voice/recording/${c.conversation_id}`,
@@ -85,6 +100,6 @@ export async function getCallLogs(limit = 50) {
     });
   } catch (error) {
     console.error("Error fetching Twilio calls:", error);
-    return [];
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }

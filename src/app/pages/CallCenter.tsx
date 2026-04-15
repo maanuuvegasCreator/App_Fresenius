@@ -57,21 +57,32 @@ interface Contact {
 export function CallCenter() {
   const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
   const [teammatesState, setTeammatesState] = useState<Contact[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const [calls, agents] = await Promise.all([fetchCalls(500), fetchAgents()]);
-        if (cancelled) return;
-        setRawCalls(calls);
-        setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
-      } catch {
-        if (!cancelled) {
-          setRawCalls([]);
-          setTeammatesState([]);
+      setLoadError(null);
+      const callsP = fetchCalls(500).then(
+        (calls) => {
+          if (!cancelled) setRawCalls(calls);
+        },
+        (e) => {
+          if (!cancelled) {
+            setRawCalls([]);
+            setLoadError(e instanceof Error ? e.message : "No se pudieron cargar las llamadas.");
+          }
         }
-      }
+      );
+      const agentsP = fetchAgents().then(
+        (agents) => {
+          if (!cancelled) setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
+        },
+        () => {
+          if (!cancelled) setTeammatesState([]);
+        }
+      );
+      await Promise.all([callsP, agentsP]);
     })();
     return () => {
       cancelled = true;
@@ -370,6 +381,12 @@ export function CallCenter() {
               />
             </div>
 
+            {loadError ? (
+              <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {loadError}
+              </div>
+            ) : null}
+
             <div className="flex items-center gap-2 mb-3">
               <Button
                 variant={filterType === 'all' ? 'secondary' : 'ghost'}
@@ -423,6 +440,16 @@ export function CallCenter() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
+            {!loadError && callRecords.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">No hay llamadas en esta cuenta</p>
+                <p className="mt-2">
+                  La lista sale de la API de Twilio (no hace falta configurar la URL de esta app para
+                  ver el historial). Si acabas de crear la cuenta, prueba a realizar una llamada de
+                  prueba.
+                </p>
+              </div>
+            ) : null}
             {filteredCalls.map((call) => (
               <div
                 key={call.id}
