@@ -11,7 +11,7 @@
  *     set VERCEL_PROTECTION_BYPASS=tu_secreto && Thinkia-Fresenius.exe
  *     (también acepta THINKIA_VERCEL_BYPASS)
  */
-const { app, BrowserWindow, shell, session } = require("electron");
+const { app, BrowserWindow, shell, session, Menu } = require("electron");
 
 const DEFAULT_APP_URL =
   "https://app-fresenius-ejw6yz3or-manuel-s-projects-f149b7e7.vercel.app/";
@@ -58,6 +58,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 640,
     title: "Thinkia · Fresenius",
+    autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -78,6 +79,10 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Windows/Linux: quita File / Edit / View… (en macOS el menú es global del sistema).
+  if (process.platform !== "darwin") {
+    Menu.setApplicationMenu(null);
+  }
   installVercelProtectionBypass();
   createWindow();
   app.on("activate", () => {
