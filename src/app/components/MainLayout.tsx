@@ -102,11 +102,11 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 py-6 px-4">
+        <nav className="flex-1 py-6 px-4 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = isActivePath(item.path);
-            
+
             return (
               <button
                 key={item.path}
@@ -126,7 +126,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
           <div className="relative">
             <button
               onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
