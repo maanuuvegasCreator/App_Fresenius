@@ -56,7 +56,6 @@ interface Contact {
 
 export function CallCenter() {
   const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [teammatesState, setTeammatesState] = useState<Contact[]>([]);
 
   useEffect(() => {
@@ -66,11 +65,9 @@ export function CallCenter() {
         const [calls, agents] = await Promise.all([fetchCalls(500), fetchAgents()]);
         if (cancelled) return;
         setRawCalls(calls);
-        setTeammatesState(mapAgentsToTeammates(agents));
-        setLoadError(null);
-      } catch (e) {
+        setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
+      } catch {
         if (!cancelled) {
-          setLoadError(e instanceof Error ? e.message : 'No se pudieron cargar los datos');
           setRawCalls([]);
           setTeammatesState([]);
         }
@@ -179,13 +176,7 @@ export function CallCenter() {
   const missedCount = callRecords.filter((c) => c.type === 'missed').length;
 
   return (
-    <div className="h-full flex flex-col bg-white min-h-0">
-      {loadError ? (
-        <div className="shrink-0 bg-amber-50 text-amber-950 text-xs px-4 py-2 border-b border-amber-200">
-          {loadError}
-        </div>
-      ) : null}
-      <div className="flex flex-1 min-h-0">
+    <div className="h-full flex bg-white">
       {/* Submenu Lateral */}
       <div className="w-20 border-r bg-white flex flex-col items-center py-6 gap-6">
         <button
@@ -734,7 +725,6 @@ export function CallCenter() {
           </div>
         )
       )}
-      </div>
 
       {/* Delete Contact Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

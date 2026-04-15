@@ -1,44 +1,105 @@
-import { Phone, Mail, Search } from "lucide-react";
-import { Button } from "./ui/button";
-import { Avatar, AvatarFallback } from "./ui/avatar";
-import { ScrollArea } from "./ui/scroll-area";
-import { Input } from "./ui/input";
-import { Badge } from "./ui/badge";
-import { useMemo, useState } from "react";
+import { Phone, Mail, Search } from 'lucide-react';
+import { Button } from './ui/button';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { ScrollArea } from './ui/scroll-area';
+import { Input } from './ui/input';
+import { Badge } from './ui/badge';
+import { useState } from 'react';
 
-export type ContactListRow = {
+interface Contact {
   id: string;
   name: string;
   phone: string;
   email?: string;
   company?: string;
   tags: string[];
-};
+}
 
 interface ContactListProps {
   onCall: (phone: string, name: string) => void;
-  /** Contactos derivados de llamadas reales (API). */
-  contacts?: ContactListRow[];
+  /** Lista desde API; si no se pasa, se usa la demo original. */
+  contacts?: Contact[];
 }
 
-export function ContactList({ onCall, contacts = [] }: ContactListProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+const contacts: Contact[] = [
+  { 
+    id: '1', 
+    name: 'Alice Johnson', 
+    phone: '+1 (555) 123-4567', 
+    email: 'alice.j@company.com',
+    company: 'Acme Corp',
+    tags: ['VIP', 'Enterprise']
+  },
+  { 
+    id: '2', 
+    name: 'Bob Smith', 
+    phone: '+1 (555) 234-5678', 
+    email: 'bob.smith@email.com',
+    company: 'TechStart Inc',
+    tags: ['Lead']
+  },
+  { 
+    id: '3', 
+    name: 'Carol Williams', 
+    phone: '+1 (555) 345-6789', 
+    email: 'carol.w@business.com',
+    company: 'Global Solutions',
+    tags: ['Support']
+  },
+  { 
+    id: '4', 
+    name: 'David Brown', 
+    phone: '+1 (555) 456-7890', 
+    email: 'david.b@startup.io',
+    tags: ['Demo']
+  },
+  { 
+    id: '5', 
+    name: 'Emma Davis', 
+    phone: '+1 (555) 567-8901', 
+    email: 'emma.d@example.com',
+    company: 'Digital Agency',
+    tags: ['Customer']
+  },
+  { 
+    id: '6', 
+    name: 'Frank Miller', 
+    phone: '+1 (555) 678-9012', 
+    email: 'frank.m@company.net',
+    tags: ['Partner']
+  },
+  { 
+    id: '7', 
+    name: 'Grace Wilson', 
+    phone: '+1 (555) 789-0123', 
+    email: 'grace.w@firm.com',
+    company: 'Marketing Pro',
+    tags: ['VIP', 'Lead']
+  },
+  { 
+    id: '8', 
+    name: 'Henry Moore', 
+    phone: '+1 (555) 890-1234', 
+    email: 'henry.m@enterprise.com',
+    company: 'Enterprise LLC',
+    tags: ['Enterprise']
+  },
+];
 
-  const filteredContacts = useMemo(
-    () =>
-      contacts.filter(
-        (contact) =>
-          contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          contact.phone.includes(searchQuery) ||
-          contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (contact.company || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          contact.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
-      ),
-    [contacts, searchQuery],
+export function ContactList({ onCall, contacts: contactsProp }: ContactListProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const source = contactsProp ?? contacts;
+
+  const filteredContacts = source.filter(contact => 
+    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.phone.includes(searchQuery) ||
+    contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const getInitials = (name: string) => {
-    const parts = name.split(" ");
+    const parts = name.split(' ');
     if (parts.length >= 2) {
       return parts[0][0] + parts[1][0];
     }
@@ -52,7 +113,7 @@ export function ContactList({ onCall, contacts = [] }: ContactListProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Buscar contactos…"
+            placeholder="Search contacts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -61,11 +122,6 @@ export function ContactList({ onCall, contacts = [] }: ContactListProps) {
       </div>
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
-          {filteredContacts.length === 0 ? (
-            <p className="text-sm text-muted-foreground px-2 py-6 text-center">
-              No hay contactos derivados de llamadas o aún no se han cargado datos del API.
-            </p>
-          ) : null}
           {filteredContacts.map((contact) => (
             <div
               key={contact.id}
@@ -78,7 +134,9 @@ export function ContactList({ onCall, contacts = [] }: ContactListProps) {
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="flex-1">
                     <p className="font-medium">{contact.name}</p>
-                    {contact.company ? <p className="text-sm text-muted-foreground">{contact.company}</p> : null}
+                    {contact.company && (
+                      <p className="text-sm text-muted-foreground">{contact.company}</p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1 mb-2">
@@ -86,12 +144,12 @@ export function ContactList({ onCall, contacts = [] }: ContactListProps) {
                     <Phone className="h-3 w-3" />
                     <span>{contact.phone}</span>
                   </div>
-                  {contact.email ? (
+                  {contact.email && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Mail className="h-3 w-3" />
                       <span className="truncate">{contact.email}</span>
                     </div>
-                  ) : null}
+                  )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {contact.tags.map((tag) => (

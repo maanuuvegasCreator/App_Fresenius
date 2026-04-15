@@ -37,16 +37,3 @@ export async function fetchNumbers() {
   if (!res.ok) throw new Error(data.error || res.statusText);
   return (Array.isArray(data.numbers) ? data.numbers : []) as import("@/types/backend").TwilioNumber[];
 }
-
-export type VoiceTokenResponse = { identity: string; token: string };
-
-/** JWT de Twilio Voice (TwiML App). Requiere sesión Supabase o cookie mock_agent_email. */
-export async function fetchVoiceToken(): Promise<VoiceTokenResponse> {
-  const res = await apiFetch("/api/token", { cache: "no-store" });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || res.statusText || "Token de voz no disponible");
-  if (!data.token || typeof data.token !== "string") {
-    throw new Error("Respuesta de token inválida");
-  }
-  return { identity: String(data.identity || ""), token: data.token };
-}

@@ -104,7 +104,6 @@ export default function CallHistory() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [teammatesState, setTeammatesState] = useState<Contact[]>([]);
 
   useEffect(() => {
@@ -115,11 +114,9 @@ export default function CallHistory() {
         if (!cancelled) {
           setRawCalls(c);
           setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
-          setLoadError(null);
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) {
-          setLoadError(e instanceof Error ? e.message : "No se pudieron cargar los datos");
           setRawCalls([]);
           setTeammatesState([]);
         }
@@ -237,11 +234,6 @@ export default function CallHistory() {
       <div className="bg-white border-b px-8 py-6">
         <h1 className="text-2xl font-semibold text-slate-900">Historial de llamadas</h1>
       </div>
-      {loadError ? (
-        <div className="shrink-0 bg-amber-50 text-amber-950 text-xs px-4 py-2 border-b border-amber-200">
-          {loadError}
-        </div>
-      ) : null}
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Call List or Contact List */}
