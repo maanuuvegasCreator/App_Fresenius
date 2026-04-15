@@ -81,26 +81,7 @@ app.options("/token", (c) => {
 
 app.get("/token", async (c) => {
   const req = c.req.raw;
-  let userEmail: string | null = null;
-
-  const authHeader = req.headers.get("Authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const bearerToken = authHeader.slice(7);
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-    if (url && anon) {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabaseMobile = createClient(url, anon, {
-        global: { headers: { Authorization: `Bearer ${bearerToken}` } },
-      });
-      const { data } = await supabaseMobile.auth.getUser();
-      userEmail = data?.user?.email ?? null;
-    }
-  }
-
-  if (!userEmail) {
-    userEmail = await getCallerEmailFromRequest(req);
-  }
+  const userEmail = await getCallerEmailFromRequest(req);
 
   if (!userEmail) {
     return c.json({ error: "Unauthorized" }, 401);
