@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchAgents, fetchCalls } from '@/lib/api-client';
+import type { BackendCall } from '@/types/backend';
+import { buildContactsFromCalls, mapAgentsToTeammates, mapToHistoryCalls } from '@/lib/call-mappers';
+import type { HistoryCall } from '@/lib/call-mappers';
 import {
   Search,
   Phone,
@@ -69,190 +73,22 @@ interface Contact {
   lastContact?: string;
 }
 
-const mockCalls: Call[] = [
-  {
-    id: '1',
-    contact: 'Alice Johnson',
-    phone: '+34 601 89 43 08',
-    type: 'incoming',
-    status: 'closed',
-    duration: '05:23',
-    timestamp: 'Hace 2 horas',
-    description: '',
-    tags: [],
-    hasRecording: true,
-    notes: 'Cliente preocupado por el tiempo de procesamiento'
-  },
-  {
-    id: '2',
-    contact: 'Bob Smith',
-    phone: '+34 934 985 66 56',
-    type: 'outgoing',
-    status: 'followup',
-    duration: '12:45',
-    timestamp: 'Hace 5 horas',
-    description: 'Seguimiento de propuesta',
-    tags: [],
-    hasRecording: true,
-    summary: 'Llamada de seguimiento para discutir propuesta comercial. Cliente interesado pero necesita más tiempo para evaluación interna.',
-    keyTopics: ['propuesta comercial', 'evaluación interna', 'presupuesto', 'timeline implementación'],
-    actionItems: ['Enviar documentación adicional sobre casos de éxito', 'Programar demo técnica para próxima semana'],
-  },
-  {
-    id: '3',
-    contact: 'Michael Cummins',
-    phone: '+34 625 112 88 90',
-    type: 'incoming',
-    status: 'closed',
-    duration: '08:12',
-    timestamp: 'Hace 8 horas',
-    description: 'Soporte técnico - configuración',
-    tags: ['soporte técnico'],
-    hasRecording: true,
-  },
-  {
-    id: '4',
-    contact: 'Santiago Martínez',
-    phone: '+34 601 89 43 08',
-    type: 'missed',
-    status: 'callback',
-    duration: '00:00',
-    timestamp: 'Ayer',
-    description: 'Llamada perdida',
-    tags: [],
-    hasRecording: false,
-    assignedAgent: 'Laura Martínez',
-  },
-  {
-    id: '5',
-    contact: 'Martín Marvin',
-    phone: '+34 601 89 43 08',
-    type: 'outgoing',
-    status: 'closed',
-    duration: '11:08',
-    timestamp: 'Ayer',
-    description: 'Presentación de producto',
-    tags: ['ventas', 'demo'],
-    hasRecording: true,
-  },
-  {
-    id: '6',
-    contact: 'Pedro Castro',
-    phone: '+34 653 78 12 45',
-    type: 'incoming',
-    status: 'followup',
-    duration: '06:17',
-    timestamp: 'Hace 2 días',
-    description: 'Consulta sobre integración',
-    tags: [],
-    hasRecording: true,
-  },
-  {
-    id: '7',
-    contact: 'Laura Fernández',
-    phone: '+34 689 45 23 67',
-    type: 'missed',
-    status: 'missed',
-    duration: '00:00',
-    timestamp: 'Hace 1 hora',
-    description: 'Llamada perdida',
-    tags: [],
-    hasRecording: false,
-  },
-];
-
-const mockContacts: Contact[] = [
-  {
-    id: '1',
-    name: 'María López García',
-    company: 'Tech Solutions SL',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: ['+34 912 345 678'],
-    emails: ['maria.lopez@techsolutions.es'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-      { name: 'Zendesk', icon: '🌱' },
-    ],
-    lastContact: 'Hoy a las 3:03 pm',
-  },
-  {
-    id: '2',
-    name: 'Juan Torres Ruiz',
-    company: 'Industrias Martinez',
-    mainNumber: '+34 983 66 05 55',
-    otherNumbers: [],
-    emails: ['j.torres@industriasmartinez.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-    lastContact: 'Hoy a las 3:01 pm',
-  },
-  {
-    id: '3',
-    name: 'Ana Martínez Pérez',
-    company: 'Consultoría Global',
-    mainNumber: '+34 912 345 678',
-    otherNumbers: ['+34 607 12 34 56'],
-    emails: ['ana.martinez@consultoria.es', 'a.martinez@gmail.com'],
-    integrations: [
-      { name: 'Salesforce V3', icon: '☁️' },
-      { name: 'Zendesk', icon: '🌱' },
-    ],
-  },
-  {
-    id: '4',
-    name: 'Michael Cummins',
-    company: 'Global Enterprises',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: [],
-    emails: ['m.cummins@globalent.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: '5',
-    name: 'Santiago Martinez',
-    company: 'Martinez Consulting',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: ['+34 913 45 67 89'],
-    emails: ['santiago@martinezconsulting.es'],
-    integrations: [],
-  },
-  {
-    id: '6',
-    name: 'Marvin Marvin',
-    company: 'Tech Innovations',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: [],
-    emails: ['marvin@techinnovations.com'],
-    integrations: [
-      { name: 'Salesforce V3', icon: '☁️' },
-    ],
-  },
-  {
-    id: '7',
-    name: 'Pedro Castro',
-    company: 'Castro & Asociados',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: [],
-    emails: ['pedro@castroasociados.es'],
-    integrations: [],
-  },
-  {
-    id: '8',
-    name: 'Oscar Simón',
-    company: 'Simón Solutions',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: ['+34 915 67 89 01'],
-    emails: ['oscar@simonsolutions.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-];
-
-const recentContactIds = ['1', '2', '3'];
+function mapHistoryToPageCall(h: HistoryCall): Call {
+  return {
+    id: h.id,
+    contact: h.contact,
+    phone: h.phone,
+    type: h.type,
+    status: h.status,
+    duration: h.duration,
+    timestamp: h.timestamp,
+    description: h.description,
+    tags: h.tags,
+    hasRecording: h.hasRecording,
+    summary: h.summary,
+    notes: h.notes,
+  };
+}
 
 export default function CallHistory() {
   const [activeTab, setActiveTab] = useState<'calls' | 'contacts'>('calls');
@@ -266,6 +102,58 @@ export default function CallHistory() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isIntegrationsExpanded, setIsIntegrationsExpanded] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [teammatesState, setTeammatesState] = useState<Contact[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [c, agents] = await Promise.all([fetchCalls(500), fetchAgents()]);
+        if (!cancelled) {
+          setRawCalls(c);
+          setTeammatesState(mapAgentsToTeammates(agents) as Contact[]);
+          setLoadError(null);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : "No se pudieron cargar los datos");
+          setRawCalls([]);
+          setTeammatesState([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const calls = useMemo(
+    () => mapToHistoryCalls(rawCalls).map(mapHistoryToPageCall),
+    [rawCalls],
+  );
+  const contactsFromCalls = useMemo(
+    () => buildContactsFromCalls(rawCalls) as Contact[],
+    [rawCalls],
+  );
+  const recentContactIds = useMemo(
+    () => contactsFromCalls.slice(0, 3).map((c) => c.id),
+    [contactsFromCalls],
+  );
+
+  useEffect(() => {
+    if (calls.length === 0) {
+      setSelectedCall(null);
+      return;
+    }
+    setSelectedCall((prev) => {
+      if (!prev) return calls[0];
+      const still = calls.find((x) => x.id === prev.id);
+      return still ?? calls[0];
+    });
+  }, [calls]);
 
   const getCallIcon = (type: CallType, status: CallStatus) => {
     if (status === 'missed') return <PhoneMissed className="h-4 w-4 text-red-500" />;
@@ -295,23 +183,31 @@ export default function CallHistory() {
     );
   };
 
-  const filteredCalls = mockCalls.filter(call => {
-    const matchesSearch = call.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         call.phone.includes(searchQuery) ||
-                         call.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || call.status === filterStatus;
+  const filteredCalls = calls.filter((call) => {
+    const matchesSearch =
+      call.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      call.phone.includes(searchQuery) ||
+      (call.description || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filterStatus === "all" || call.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
-  const filteredContacts = mockContacts.filter(
+  const filteredContacts = contactsFromCalls.filter(
     (contact) =>
       contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
       contact.company.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
-      contact.mainNumber.includes(contactSearchQuery)
+      contact.mainNumber.includes(contactSearchQuery),
+  );
+
+  const filteredTeammates = teammatesState.filter(
+    (contact) =>
+      contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+      contact.company.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+      contact.mainNumber.includes(contactSearchQuery),
   );
 
   const recentContacts = filteredContacts.filter((c) => recentContactIds.includes(c.id));
-  const allContacts = filteredContacts;
+  const allContacts = contactsTab === "contacts" ? filteredContacts : filteredTeammates;
 
   const getInitials = (name: string) => {
     return name
@@ -331,9 +227,9 @@ export default function CallHistory() {
     setSelectedContact(null);
   };
 
-  const missedCount = mockCalls.filter(c => c.status === 'missed').length;
-  const callbackCount = mockCalls.filter(c => c.status === 'callback').length;
-  const followupCount = mockCalls.filter(c => c.status === 'followup').length;
+  const missedCount = calls.filter((c) => c.status === "missed").length;
+  const callbackCount = calls.filter((c) => c.status === "callback").length;
+  const followupCount = calls.filter((c) => c.status === "followup").length;
 
   return (
     <div className="size-full flex flex-col bg-slate-50">
@@ -341,6 +237,11 @@ export default function CallHistory() {
       <div className="bg-white border-b px-8 py-6">
         <h1 className="text-2xl font-semibold text-slate-900">Historial de llamadas</h1>
       </div>
+      {loadError ? (
+        <div className="shrink-0 bg-amber-50 text-amber-950 text-xs px-4 py-2 border-b border-amber-200">
+          {loadError}
+        </div>
+      ) : null}
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel - Call List or Contact List */}
@@ -401,7 +302,7 @@ export default function CallHistory() {
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  Todas {mockCalls.length}
+                  Todas {calls.length}
                 </button>
                 <button
                   onClick={() => setFilterStatus('missed')}

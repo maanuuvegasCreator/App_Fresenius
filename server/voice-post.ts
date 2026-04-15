@@ -160,9 +160,11 @@ export async function handleVoicePost(req: Request): Promise<Response> {
         if (aiTwiml) return new Response(aiTwiml, { headers: { "Content-Type": "text/xml" } });
         twiml.say({ language: "es-ES" }, "No se pudo conectar con la IA.");
       } else if (to) {
+        const callerId =
+          process.env.TWILIO_CALLER_ID || process.env.TWILIO_FROM_NUMBER || "+15073352716";
         twiml
           .dial({
-            callerId: "+15073352716",
+            callerId,
             record: "record-from-ringing-dual",
             recordingStatusCallback: "/api/voice/recording",
           })

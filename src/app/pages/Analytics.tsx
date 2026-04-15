@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchAgents, fetchCalls } from '@/lib/api-client';
+import { buildAnalyticsCharts } from '@/lib/analytics-from-calls';
+import type { AgentRow, BackendCall } from '@/types/backend';
 import {
   BarChart,
   Bar,
@@ -31,7 +34,7 @@ const GR = '#16a34a';  // Green
 const RD = '#dc2626';  // Red
 
 // Data exacta del HTML
-const weekDayCallsData = [
+const FALLBACK_weekDayCallsData = [
   { day: 'Lun', inbound: 180, outbound: 60, classified: 20, lostPct: 3.1, total: 260 },
   { day: 'Mar', inbound: 240, outbound: 80, classified: 30, lostPct: 4.2, total: 350 },
   { day: 'Mie', inbound: 230, outbound: 70, classified: 25, lostPct: 5.8, total: 325 },
@@ -41,7 +44,7 @@ const weekDayCallsData = [
   { day: 'Dom', inbound: 60, outbound: 20, classified: 8, lostPct: 1.4, total: 88 },
 ];
 
-const dailyEvolutionData = [
+const FALLBACK_dailyEvolutionData = [
   { date: 'Mar 9', inbound: 1304, outbound: 400, total: 1704 },
   { date: 'Mar 10', inbound: 1942, outbound: 600, total: 2542 },
   { date: 'Mar 11', inbound: 1524, outbound: 480, total: 2004 },
@@ -49,7 +52,7 @@ const dailyEvolutionData = [
   { date: 'Mar 13', inbound: 768, outbound: 240, total: 1008 },
 ];
 
-const callsHistoryData = [
+const FALLBACK_callsHistoryData = [
   { day: 'Lun', inbound: 283, outbound: 98, missed: 28, total: 409 },
   { day: 'Mar', inbound: 312, outbound: 112, missed: 22, total: 446 },
   { day: 'Mie', inbound: 298, outbound: 104, missed: 31, total: 433 },
@@ -59,7 +62,7 @@ const callsHistoryData = [
   { day: 'Dom', inbound: 42, outbound: 15, missed: 5, total: 62 },
 ];
 
-const abandonRateAgentsData = [
+const FALLBACK_abandonRateAgentsData = [
   { day: 'Lun', abandonPct: 5.2, agents: 18 },
   { day: 'Mar', abandonPct: 4.8, agents: 22 },
   { day: 'Mie', abandonPct: 6.1, agents: 20 },
@@ -69,7 +72,7 @@ const abandonRateAgentsData = [
   { day: 'Dom', abandonPct: 2.1, agents: 4 },
 ];
 
-const realtimeMonitorData = [
+const FALLBACK_realtimeMonitorData = [
   { time: '8h', active: 22, onHold: 4, agents: 12 },
   { time: '9h', active: 35, onHold: 8, agents: 10 },
   { time: '10h', active: 42, onHold: 11, agents: 9 },
@@ -83,7 +86,7 @@ const realtimeMonitorData = [
   { time: '18h', active: 18, onHold: 3, agents: 12 },
 ];
 
-const agentPerformanceData = [
+const FALLBACK_agentPerformanceData = [
   { agent: 'Agente 1', total: 40, answered: 30, avgSpeed: '87.1s', resolution: 87.1, trend: 'up', sparkline: [70,74,78,80,84,87] },
   { agent: 'Agente 2', total: 41, answered: 38, avgSpeed: '68s', resolution: 79.5, trend: 'down', sparkline: [88,85,83,81,80,79] },
   { agent: 'Agente 3', total: 51, answered: 45, avgSpeed: '80.1s', resolution: 71.0, trend: 'down', sparkline: [80,77,74,72,71,71] },
@@ -91,7 +94,7 @@ const agentPerformanceData = [
   { agent: 'Agente 5', total: 50, answered: 30, avgSpeed: '62.6s', resolution: 91.6, trend: 'up', sparkline: [80,83,86,88,90,91] },
 ];
 
-const callsHandledByAgent = [
+const FALLBACK_callsHandledByAgent = [
   { name: 'Agente 1', total: 148, answered: 118, color: B4 },
   { name: 'Agente 2', total: 162, answered: 134, color: B4 },
   { name: 'Agente 3', total: 105, answered: 82, color: V4 },
@@ -101,7 +104,7 @@ const callsHandledByAgent = [
   { name: 'Agente 7', total: 72, answered: 55, color: B2 },
 ];
 
-const callsAbandonedByAgent = [
+const FALLBACK_callsAbandonedByAgent = [
   { name: 'Agente 1', value: 32, percentage: 25, color: B6 },
   { name: 'Agente 2', value: 25, percentage: 20, color: B4 },
   { name: 'Agente 3', value: 22, percentage: 17, color: V4 },
@@ -111,7 +114,7 @@ const callsAbandonedByAgent = [
   { name: 'Agente 7', value: 8, percentage: 6, color: '#9ca3af' },
 ];
 
-const hourlyDistributionData = [
+const FALLBACK_hourlyDistributionData = [
   { hour: '08h', received: 112, made: 48, lost: 4.2, agents: 12 },
   { hour: '09h', received: 198, made: 67, lost: 6.1, agents: 11 },
   { hour: '10h', received: 321, made: 89, lost: 9.3, agents: 10 },
@@ -126,7 +129,7 @@ const hourlyDistributionData = [
   { hour: '19h', received: 98, made: 31, lost: 2.1, agents: 12 },
 ];
 
-const occupancyBySlot = [
+const FALLBACK_occupancyBySlot = [
   { slot: '08–10h', pct: 55, color: B2 },
   { slot: '10–12h', pct: 84, color: B4 },
   { slot: '12–14h', pct: 61, color: B2 },
@@ -135,7 +138,7 @@ const occupancyBySlot = [
   { slot: '18–20h', pct: 44, color: B2 },
 ];
 
-const slotDetailData = [
+const FALLBACK_slotDetailData = [
   { slot: '08–09h', received: 112, made: 48, agents: 12, lost: '4.2%', status: 'OK', statusColor: '#dcfce7', textColor: '#15803d' },
   { slot: '09–10h', received: 198, made: 67, agents: 11, lost: '6.1%', status: 'OK', statusColor: '#dcfce7', textColor: '#15803d' },
   { slot: '10–11h', received: 321, made: 89, agents: 10, lost: '9.3%', status: 'Alerta', statusColor: '#fef3c7', textColor: '#92400e' },
@@ -206,8 +209,45 @@ export default function Analytics() {
   const [subTab, setSubTab] = useState<SubTab>('global');
   const [capacityPeriod, setCapacityPeriod] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [selectedAgent, setSelectedAgent] = useState<string>('todos');
+  const [apiCalls, setApiCalls] = useState<BackendCall[]>([]);
+  const [apiAgents, setApiAgents] = useState<AgentRow[]>([]);
 
-  const maxHandled = Math.max(...callsHandledByAgent.map(a => a.total));
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [c, a] = await Promise.all([fetchCalls(2000), fetchAgents()]);
+        if (!cancelled) {
+          setApiCalls(c);
+          setApiAgents(a);
+        }
+      } catch {
+        if (!cancelled) {
+          setApiCalls([]);
+          setApiAgents([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const charts = useMemo(() => buildAnalyticsCharts(apiCalls, apiAgents), [apiCalls, apiAgents]);
+  const useLive = apiCalls.length > 0;
+  const weekDayCallsData = useLive ? charts.weekDayCallsData : FALLBACK_weekDayCallsData;
+  const dailyEvolutionData = useLive ? charts.dailyEvolutionData : FALLBACK_dailyEvolutionData;
+  const callsHistoryData = useLive ? charts.callsHistoryData : FALLBACK_callsHistoryData;
+  const abandonRateAgentsData = useLive ? charts.abandonRateAgentsData : FALLBACK_abandonRateAgentsData;
+  const realtimeMonitorData = useLive ? charts.realtimeMonitorData : FALLBACK_realtimeMonitorData;
+  const agentPerformanceData = useLive ? charts.agentPerformanceData : FALLBACK_agentPerformanceData;
+  const callsHandledByAgent = useLive ? charts.callsHandledByAgent : FALLBACK_callsHandledByAgent;
+  const callsAbandonedByAgent = useLive ? charts.callsAbandonedByAgent : FALLBACK_callsAbandonedByAgent;
+  const hourlyDistributionData = useLive ? charts.hourlyDistributionData : FALLBACK_hourlyDistributionData;
+  const occupancyBySlot = useLive ? charts.occupancyBySlot : FALLBACK_occupancyBySlot;
+  const slotDetailData = useLive ? charts.slotDetailData : FALLBACK_slotDetailData;
+
+  const maxHandled = Math.max(0, ...callsHandledByAgent.map((a) => a.total));
 
   return (
     <div className="size-full flex flex-col" style={{ background: '#f2f3f8', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>

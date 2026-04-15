@@ -1,4 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchAgents, fetchCalls } from '@/lib/api-client';
+import type { BackendCall } from '@/types/backend';
+import {
+  buildContactsFromCalls,
+  mapAgentsToTeammates,
+  mapToCallCenterRecords,
+} from '@/lib/call-mappers';
 import { Search, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, ChevronDown, ChevronUp, MoreVertical, RotateCcw, X, Plus, Users, BookOpen, Mail, Copy } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -47,278 +54,62 @@ interface Contact {
   lastContact?: string;
 }
 
-const mockCalls: CallRecord[] = [
-  {
-    id: '1',
-    type: 'inbound',
-    number: '+34 607 89 43 01',
-    contact: 'María López García',
-    createdBy: 'Pedro Castro Lara',
-    time: '03:03 pm',
-    duration: '5:23',
-    status: 'closed',
-    date: 'Today',
-    hasNote: true,
-  },
-  {
-    id: '2',
-    type: 'inbound',
-    number: '+34 983 66 05 55',
-    contact: 'Juan Torres Ruiz',
-    createdBy: 'Pedro Castro Lara',
-    time: '03:01 pm',
-    duration: '3:45',
-    status: 'closed',
-    date: 'Today',
-    hasNote: false,
-  },
-  {
-    id: '3',
-    type: 'missed',
-    number: '+34 912 345 678',
-    contact: 'Ana Martínez Pérez',
-    createdBy: 'Sistema',
-    time: '02:45 pm',
-    duration: '0:00',
-    status: 'pending',
-    date: 'Today',
-    hasNote: false,
-  },
-  {
-    id: '4',
-    type: 'outbound',
-    number: '+34 607 89 43 01',
-    contact: 'Michael Cummins',
-    createdBy: 'Pedro Castro Lara',
-    time: '02:15 pm',
-    duration: '8:12',
-    status: 'closed',
-    date: 'Today',
-    hasNote: false,
-  },
-  {
-    id: '5',
-    type: 'inbound',
-    number: '+34 607 89 43 01',
-    contact: 'Santiago Martinez',
-    createdBy: 'Pedro Castro Lara',
-    time: '09:46 am',
-    duration: '15:30',
-    status: 'closed',
-    date: 'Jun 27',
-    hasNote: true,
-  },
-  {
-    id: '6',
-    type: 'outbound',
-    number: '+34 607 89 43 01',
-    contact: 'Marvin Marvin',
-    createdBy: 'Pedro Castro Lara',
-    time: '09:32 am',
-    duration: '2:18',
-    status: 'closed',
-    date: 'Jun 27',
-    hasNote: false,
-  },
-  {
-    id: '7',
-    type: 'inbound',
-    number: '+34 607 89 43 01',
-    contact: 'Pedro Castro',
-    createdBy: 'Pedro Castro Lara',
-    time: '10:10 am',
-    duration: '4:56',
-    status: 'closed',
-    date: 'Jun 27',
-    hasNote: false,
-  },
-  {
-    id: '8',
-    type: 'missed',
-    number: '+34 607 89 43 01',
-    contact: 'Oscar Simón',
-    createdBy: 'Pedro Castro Lara',
-    time: '09:28 am',
-    duration: '0:00',
-    status: 'pending',
-    date: 'Jun 26',
-    hasNote: false,
-  },
-];
-
-const mockContacts: Contact[] = [
-  {
-    id: '1',
-    name: 'María López García',
-    company: 'Tech Solutions SL',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: ['+34 912 345 678'],
-    emails: ['maria.lopez@techsolutions.es'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-    lastContact: 'Hoy a las 3:03 pm',
-  },
-  {
-    id: '2',
-    name: 'Juan Torres Ruiz',
-    company: 'Industrias Martinez',
-    mainNumber: '+34 983 66 05 55',
-    otherNumbers: [],
-    emails: ['j.torres@industriasmartinez.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-    lastContact: 'Hoy a las 3:01 pm',
-  },
-  {
-    id: '3',
-    name: 'Ana Martínez Pérez',
-    company: 'Consultoría Global',
-    mainNumber: '+34 912 345 678',
-    otherNumbers: ['+34 607 12 34 56'],
-    emails: ['ana.martinez@consultoria.es', 'a.martinez@gmail.com'],
-    integrations: [],
-  },
-  {
-    id: '4',
-    name: 'Michael Cummins',
-    company: 'Global Enterprises',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: [],
-    emails: ['m.cummins@globalent.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: '5',
-    name: 'Santiago Martinez',
-    company: 'Martinez Consulting',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: ['+34 913 45 67 89'],
-    emails: ['santiago@martinezconsulting.es'],
-    integrations: [],
-  },
-  {
-    id: '6',
-    name: 'Marvin Marvin',
-    company: 'Tech Innovations',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: [],
-    emails: ['marvin@techinnovations.com'],
-    integrations: [],
-  },
-  {
-    id: '7',
-    name: 'Pedro Castro',
-    company: 'Castro & Asociados',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: [],
-    emails: ['pedro@castroasociados.es'],
-    integrations: [],
-  },
-  {
-    id: '8',
-    name: 'Oscar Simón',
-    company: 'Simón Solutions',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: ['+34 915 67 89 01'],
-    emails: ['oscar@simonsolutions.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-];
-
-const mockTeammates: Contact[] = [
-  {
-    id: 't1',
-    name: 'Laura Sánchez',
-    company: 'Thinkia',
-    mainNumber: '+34 691 23 45 67',
-    otherNumbers: [],
-    emails: ['laura.sanchez@thinkia.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: 't2',
-    name: 'Javier Ruiz',
-    company: 'Thinkia',
-    mainNumber: '+34 607 89 43 01',
-    otherNumbers: [],
-    emails: ['javier.ruiz@thinkia.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: 't3',
-    name: 'Pedro Ramírez',
-    company: 'Thinkia',
-    mainNumber: '+34 678 90 12 34',
-    otherNumbers: [],
-    emails: ['pedro.ramirez@thinkia.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: 't4',
-    name: 'Elena Fernández',
-    company: 'Thinkia',
-    mainNumber: '+34 655 44 33 22',
-    otherNumbers: [],
-    emails: ['elena.fernandez@thinkia.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: 't5',
-    name: 'Carmen Rodríguez',
-    company: 'Thinkia',
-    mainNumber: '+34 644 55 66 77',
-    otherNumbers: [],
-    emails: ['carmen.rodriguez@thinkia.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: 't6',
-    name: 'Ana Martínez',
-    company: 'Thinkia',
-    mainNumber: '+34 633 22 11 00',
-    otherNumbers: [],
-    emails: ['ana.martinez@thinkia.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-  {
-    id: 't7',
-    name: 'Diego López',
-    company: 'Thinkia',
-    mainNumber: '+34 622 11 00 99',
-    otherNumbers: [],
-    emails: ['diego.lopez@thinkia.com'],
-    integrations: [
-      { name: 'Microsoft Dynamics 365', icon: '🔷' },
-    ],
-  },
-];
-
-const recentContactIds = ['1', '2', '3'];
-
 export function CallCenter() {
+  const [rawCalls, setRawCalls] = useState<BackendCall[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [teammatesState, setTeammatesState] = useState<Contact[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [calls, agents] = await Promise.all([fetchCalls(500), fetchAgents()]);
+        if (cancelled) return;
+        setRawCalls(calls);
+        setTeammatesState(mapAgentsToTeammates(agents));
+        setLoadError(null);
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : 'No se pudieron cargar los datos');
+          setRawCalls([]);
+          setTeammatesState([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const callRecords = useMemo(() => mapToCallCenterRecords(rawCalls), [rawCalls]);
+  const contactsFromCalls = useMemo(
+    () => buildContactsFromCalls(rawCalls) as Contact[],
+    [rawCalls],
+  );
+  const teammatesFromAgents = teammatesState;
+
+  const recentContactIds = useMemo(
+    () => contactsFromCalls.slice(0, 3).map((c) => c.id),
+    [contactsFromCalls],
+  );
+
   const [activeSection, setActiveSection] = useState<'calls' | 'contacts'>('calls');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCall, setSelectedCall] = useState<CallRecord>(mockCalls[4]);
+  const [selectedCall, setSelectedCall] = useState<CallRecord | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'missed' | 'callbacks' | 'followup'>('all');
   const [sortBy, setSortBy] = useState('newest');
+
+  useEffect(() => {
+    if (callRecords.length === 0) {
+      setSelectedCall(null);
+      return;
+    }
+    setSelectedCall((prev) => {
+      if (!prev) return callRecords[0];
+      const still = callRecords.find((c) => c.id === prev.id);
+      return still ?? callRecords[0];
+    });
+  }, [callRecords]);
 
   // Contacts state
   const [contactsTab, setContactsTab] = useState<'contacts' | 'teammates'>('contacts');
@@ -327,7 +118,7 @@ export function CallCenter() {
   const [isIntegrationsExpanded, setIsIntegrationsExpanded] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const filteredCalls = mockCalls.filter((call) => {
+  const filteredCalls = callRecords.filter((call) => {
     const matchesSearch =
       call.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
       call.number.includes(searchQuery);
@@ -339,13 +130,13 @@ export function CallCenter() {
     return matchesSearch && matchesFilter;
   });
 
-  const filteredContacts = mockContacts.filter(
+  const filteredContacts = contactsFromCalls.filter(
     (contact) =>
       contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
       contact.mainNumber.includes(contactSearchQuery)
   );
 
-  const filteredTeammates = mockTeammates.filter(
+  const filteredTeammates = teammatesFromAgents.filter(
     (teammate) =>
       teammate.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
       teammate.mainNumber.includes(contactSearchQuery)
@@ -385,10 +176,16 @@ export function CallCenter() {
     setSelectedContact(null);
   };
 
-  const missedCount = mockCalls.filter(c => c.type === 'missed').length;
+  const missedCount = callRecords.filter((c) => c.type === 'missed').length;
 
   return (
-    <div className="h-full flex bg-white">
+    <div className="h-full flex flex-col bg-white min-h-0">
+      {loadError ? (
+        <div className="shrink-0 bg-amber-50 text-amber-950 text-xs px-4 py-2 border-b border-amber-200">
+          {loadError}
+        </div>
+      ) : null}
+      <div className="flex flex-1 min-h-0">
       {/* Submenu Lateral */}
       <div className="w-20 border-r bg-white flex flex-col items-center py-6 gap-6">
         <button
@@ -937,6 +734,7 @@ export function CallCenter() {
           </div>
         )
       )}
+      </div>
 
       {/* Delete Contact Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
