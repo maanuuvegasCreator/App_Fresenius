@@ -1,6 +1,13 @@
 import twilio from "twilio";
 import { createApiClient } from "./supabase-api";
 
+type CallMetaRow = {
+  call_sid?: string | null;
+  handler?: string | null;
+  reason?: string | null;
+  agent_identity?: string | null;
+};
+
 export async function getCallLogs(limit = 50) {
   const safeLimit = Math.min(1000, Math.max(1, Math.floor(Number(limit)) || 50));
   try {
@@ -20,10 +27,12 @@ export async function getCallLogs(limit = 50) {
     const { data: metadata, error: metaError } = await supabase.from("call_metadata").select("*");
     if (metaError) console.error("[METADATA_ERROR]", metaError);
 
+    const metaRows = (metadata ?? []) as CallMetaRow[];
+
     const mappedTwilio = calls.map((c) => {
       const rec = recordings.find((r) => r.callSid === c.sid);
       const recordingUrl = rec ? `/api/voice/recording/${rec.sid}` : null;
-      const meta = metadata?.find((m) => String(m.call_sid).trim() === c.sid.trim());
+      const meta = metaRows.find((m) => String(m.call_sid ?? "").trim() === c.sid.trim());
       return {
         sid: c.sid,
         from: c.from,

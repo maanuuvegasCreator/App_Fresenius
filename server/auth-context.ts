@@ -19,7 +19,7 @@ export async function getCallerEmailFromRequest(req: Request): Promise<string | 
     const supabase = createClient(url, anon, {
       global: { headers: { Authorization: `Bearer ${bearerToken}` } },
     });
-    const { data } = await supabase.auth.getUser(bearerToken);
+    const { data } = await supabase.auth.getUser();
     return data?.user?.email ?? null;
   }
 

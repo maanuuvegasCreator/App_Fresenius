@@ -93,7 +93,7 @@ app.get("/token", async (c) => {
       const supabaseMobile = createClient(url, anon, {
         global: { headers: { Authorization: `Bearer ${bearerToken}` } },
       });
-      const { data } = await supabaseMobile.auth.getUser(bearerToken);
+      const { data } = await supabaseMobile.auth.getUser();
       userEmail = data?.user?.email ?? null;
     }
   }
