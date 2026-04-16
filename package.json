@@ -11,7 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "desktop:dev": "pnpm --dir desktop start",
-    "desktop:dist": "pnpm install --dir desktop && pnpm --dir desktop run dist"
+    "desktop:dist": "pnpm install --dir desktop && pnpm --dir desktop run dist",
+    "desktop:dist:mac": "pnpm install --dir desktop && pnpm --dir desktop run dist:mac"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
