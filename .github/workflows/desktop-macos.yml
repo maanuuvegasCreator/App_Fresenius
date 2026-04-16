@@ -1,13 +1,22 @@
-# Genera el .zip para Mac desde GitHub (runner macOS). Útil si solo tienes Windows.
-# Repo → Actions → "Desktop macOS (zip)" → Run workflow → descarga el artifact.
+# Genera .zip para Mac (ARM e Intel en paralelo). Evita el build "universal" que tarda mucho.
+# GitHub → Actions → "Desktop macOS (zip)" → Run workflow → descarga los 2 artifacts.
 name: Desktop macOS (zip)
 
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, x64]
     runs-on: macos-latest
+    timeout-minutes: 35
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,15 +26,20 @@ jobs:
           cache: "npm"
           cache-dependency-path: desktop/package-lock.json
 
-      - name: Install & build
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Build macOS (${{ matrix.arch }})
         working-directory: desktop
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: |
-          npm ci
-          npm run dist:mac
+        run: npm run dist:mac:${{ matrix.arch }}
+
+      - name: List output
+        run: ls -la desktop/out/
 
       - uses: actions/upload-artifact@v4
         with:
-          name: thinkia-fresenius-macos-zip
+          name: thinkia-fresenius-mac-${{ matrix.arch }}
           path: desktop/out/*.zip
