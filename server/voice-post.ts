@@ -56,6 +56,28 @@ function getAssignedAgentIdentities(toNumber: string): string[] {
   return defaultAgents;
 }
 
+/** URL absoluta para callbacks de Twilio (grabaciones). Sin esto, rutas relativas fallan en la nube. */
+function resolvePublicOrigin(req: Request): string {
+  const explicit = process.env.PUBLIC_APP_URL?.trim() || process.env.PUBLIC_API_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+  const v = process.env.VERCEL_URL?.trim();
+  if (v) {
+    const host = v.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    return `https://${host}`;
+  }
+  try {
+    return new URL(req.url).origin;
+  } catch {
+    return "";
+  }
+}
+
+function recordingOpts(req: Request): { recordingStatusCallback?: string } {
+  const origin = resolvePublicOrigin(req);
+  if (!origin) return {};
+  return { recordingStatusCallback: `${origin}/api/voice/recording` };
+}
+
 async function getElevenLabsTwiML(agentId: string, apiKey: string, fromNumber: string, toNumber: string) {
   try {
     const validFrom = fromNumber.startsWith("client:") || !fromNumber ? "+15073352716" : fromNumber;
@@ -126,6 +148,7 @@ async function getActiveRoutingFlow(toNumber: string, fallbackIdentities: string
 export async function handleVoicePost(req: Request): Promise<Response> {
   try {
     const url = new URL(req.url);
+    const recOpts = recordingOpts(req);
     const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
     const to = params.get("To") || "";
@@ -148,7 +171,7 @@ export async function handleVoicePost(req: Request): Promise<Response> {
         return new Response(twiml.toString(), { headers: { "Content-Type": "text/xml" } });
       }
 
-      const dial = twiml.dial({ record: "record-from-ringing-dual", recordingStatusCallback: "/api/voice/recording" });
+      const dial = twiml.dial({ record: "record-from-ringing-dual", ...recOpts });
       dial.client(to.replace("client:", ""));
     } else if (from && from.startsWith("client:")) {
       if (to === "AI") {
@@ -166,7 +189,7 @@ export async function handleVoicePost(req: Request): Promise<Response> {
           .dial({
             callerId,
             record: "record-from-ringing-dual",
-            recordingStatusCallback: "/api/voice/recording",
+            ...recOpts,
           })
           .number(to);
       }
@@ -219,7 +242,7 @@ export async function handleVoicePost(req: Request): Promise<Response> {
         const dial = twiml.dial({
           timeout: Math.min(60, Math.max(5, Number(step.ringSeconds || 20))),
           record: "record-from-answer-dual",
-          recordingStatusCallback: "/api/voice/recording",
+          ...recOpts,
         });
         dial.client(id);
         routedAnyAgent = true;
@@ -290,7 +313,7 @@ export async function handleVoicePost(req: Request): Promise<Response> {
       twiml.say({ language: "es-ES" }, lastOfflineMessage || "Lo sentimos, no estamos disponibles ahora.");
       twiml.pause({ length: 1 });
       twiml.say({ language: "es-ES" }, "Dejenos su mensaje y le devolveremos la llamada.");
-      twiml.record({ maxLength: 30, recordingStatusCallback: "/api/voice/recording" });
+      twiml.record({ maxLength: 30, ...recOpts });
 
       return new Response(twiml.toString(), { headers: { "Content-Type": "text/xml" } });
     }

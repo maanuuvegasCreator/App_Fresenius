@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Phone, Users, History, X, BarChart3 } from 'lucide-react';
+import type { Call } from '@twilio/voice-sdk';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -12,6 +13,8 @@ import { fetchCalls } from '@/lib/api-client';
 import { DEMO_BACKEND_CALLS } from '@/lib/demo-backend-calls';
 import { buildContactsFromCalls, mapToHistoryCalls } from '@/lib/call-mappers';
 import type { BackendCall } from '@/types/backend';
+import { useTwilioVoice } from '@/hooks/useTwilioVoice';
+import { toE164 } from '@/lib/phone-e164';
 
 const USE_LIVE_CALLS = import.meta.env.VITE_USE_LIVE_CALLS === 'true';
 
@@ -34,6 +37,8 @@ type DashboardHistoryRow = {
   tags: string[];
   notes?: string;
 };
+
+type UiStatus = 'available' | 'unavailable' | 'do-not-disturb' | 'be-right-back' | 'appear-away';
 
 function rowsFromCalls(calls: BackendCall[]): DashboardHistoryRow[] {
   return mapToHistoryCalls(calls).map((h) => ({
@@ -60,15 +65,19 @@ function contactsFromApi(calls: BackendCall[]): DashboardContact[] {
 }
 
 export function Dashboard() {
+  const voice = useTwilioVoice();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isInCall, setIsInCall] = useState(false);
   const [activeContact, setActiveContact] = useState('');
   const [activePhone, setActivePhone] = useState('');
   const [activeView, setActiveView] = useState<'dialpad' | 'contacts' | 'history'>('dialpad');
-  const [userStatus, setUserStatus] = useState<'available' | 'busy' | 'away'>('available');
+  const [userStatus, setUserStatus] = useState<UiStatus>('available');
   const [rawCalls, setRawCalls] = useState<BackendCall[]>(() =>
     USE_LIVE_CALLS ? [] : DEMO_BACKEND_CALLS
   );
+  const [twilioCall, setTwilioCall] = useState<Call | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [dialError, setDialError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,21 +98,50 @@ export function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!twilioCall) return;
+    const onDisconnect = () => {
+      setTwilioCall(null);
+      setIsInCall(false);
+      setActiveContact('');
+      setActivePhone('');
+    };
+    twilioCall.on('disconnect', onDisconnect);
+    return () => {
+      twilioCall.off('disconnect', onDisconnect);
+    };
+  }, [twilioCall]);
+
   const historyRows = useMemo(() => rowsFromCalls(rawCalls), [rawCalls]);
   const contactRows = useMemo(() => contactsFromApi(rawCalls), [rawCalls]);
 
-  const handleCall = (number?: string, name?: string) => {
-    const numberToCall = number || phoneNumber;
-    if (numberToCall) {
-      setActiveContact(name || numberToCall);
-      setActivePhone(number || phoneNumber);
+  const handleCall = async (number?: string, name?: string) => {
+    const raw = (number ?? phoneNumber).trim();
+    if (!raw) return;
+    setDialError(null);
+    setConnecting(true);
+    try {
+      const e164 = toE164(raw);
+      const call = await voice.connect(e164);
+      setTwilioCall(call);
+      setActiveContact(name || raw);
+      setActivePhone(e164);
       setIsInCall(true);
       setPhoneNumber('');
+    } catch (e) {
+      setDialError(e instanceof Error ? e.message : 'No se pudo iniciar la llamada');
+    } finally {
+      setConnecting(false);
     }
   };
 
-  const handleEndCall = (notes: string, tags: string[]) => {
-    console.log('Call ended with notes:', notes, 'and tags:', tags);
+  const handleEndCall = (_notes: string, _tags: string[]) => {
+    try {
+      twilioCall?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    setTwilioCall(null);
     setIsInCall(false);
     setActiveContact('');
     setActivePhone('');
@@ -116,17 +154,46 @@ export function Dashboard() {
   if (isInCall) {
     return (
       <div className="size-full bg-background">
-        <EnhancedActiveCall 
-          contact={activeContact} 
+        <EnhancedActiveCall
+          contact={activeContact}
           phone={activePhone}
-          onEndCall={handleEndCall} 
+          twilioCall={twilioCall}
+          onEndCall={handleEndCall}
         />
       </div>
     );
   }
 
   return (
-    <div className="size-full flex bg-background">
+    <div className="relative size-full flex bg-background">
+      {voice.incoming ? (
+        <div className="absolute inset-x-0 bottom-0 z-50 border-t bg-background/95 p-4 shadow-lg backdrop-blur">
+          <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">Llamada entrante</p>
+              <p className="text-xs text-muted-foreground">Twilio Voice</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => voice.rejectIncoming()}>
+                Rechazar
+              </Button>
+              <Button
+                onClick={() => {
+                  const c = voice.acceptIncoming();
+                  if (!c) return;
+                  setTwilioCall(c);
+                  setIsInCall(true);
+                  setActiveContact('Entrante');
+                  setActivePhone(c.parameters?.From || '');
+                }}
+              >
+                Aceptar
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Sidebar */}
       <div className="w-20 border-r flex flex-col items-center py-6 gap-6 bg-muted/30">
         <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
@@ -178,11 +245,28 @@ export function Dashboard() {
               {activeView === 'contacts' && 'Contactos'}
               {activeView === 'history' && 'Historial de Llamadas'}
             </h1>
+            {voice.identity ? (
+              <p className="text-xs text-muted-foreground">
+                Agente Twilio: <span className="font-mono">{voice.identity}</span>
+                {voice.ready ? ' · Registrado' : ' · Registrando…'}
+              </p>
+            ) : null}
           </div>
           <div className="w-48">
             <StatusSelector status={userStatus} onStatusChange={setUserStatus} />
           </div>
         </div>
+
+        {voice.error ? (
+          <div className="border-b border-destructive/30 bg-destructive/10 px-6 py-2 text-sm text-destructive">
+            Voz: {voice.error}
+          </div>
+        ) : null}
+        {dialError ? (
+          <div className="border-b border-destructive/30 bg-destructive/10 px-6 py-2 text-sm text-destructive">
+            {dialError}
+          </div>
+        ) : null}
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden">
@@ -218,25 +302,29 @@ export function Dashboard() {
                   <Button
                     size="lg"
                     className="rounded-full h-16 w-16"
-                    onClick={() => handleCall()}
-                    disabled={!phoneNumber}
+                    onClick={() => void handleCall()}
+                    disabled={!phoneNumber || connecting || !voice.ready}
+                    title={!voice.ready ? 'Esperando registro de Twilio Voice…' : undefined}
                   >
                     <Phone className="h-6 w-6" />
                   </Button>
                 </div>
+                {!voice.ready && !voice.error ? (
+                  <p className="mt-3 text-center text-xs text-muted-foreground">Conectando con Twilio…</p>
+                ) : null}
               </Card>
             </div>
           )}
 
           {activeView === 'contacts' && (
             <div className="h-full">
-              <ContactList onCall={handleCall} contacts={contactRows} />
+              <ContactList onCall={(n, name) => void handleCall(n, name)} contacts={contactRows} />
             </div>
           )}
 
           {activeView === 'history' && (
             <div className="h-full">
-              <CallHistory onCall={handleCall} records={historyRows} />
+              <CallHistory onCall={(n, name) => void handleCall(n, name)} records={historyRows} />
             </div>
           )}
         </div>

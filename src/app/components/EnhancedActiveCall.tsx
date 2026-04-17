@@ -7,14 +7,17 @@ import { Card } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { CallNotes } from './CallNotes';
 import { ScrollArea } from './ui/scroll-area';
+import type { Call } from '@twilio/voice-sdk';
 
 interface EnhancedActiveCallProps {
   contact: string;
   phone: string;
   onEndCall: (notes: string, tags: string[]) => void;
+  /** Si existe, mute y colgar controlan la llamada WebRTC real. */
+  twilioCall?: Call | null;
 }
 
-export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActiveCallProps) {
+export function EnhancedActiveCall({ contact, phone, onEndCall, twilioCall }: EnhancedActiveCallProps) {
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(false);
@@ -22,6 +25,16 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
   const [notes, setNotes] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('info');
+
+  useEffect(() => {
+    if (twilioCall) {
+      try {
+        setIsMuted(twilioCall.isMuted());
+      } catch {
+        setIsMuted(false);
+      }
+    }
+  }, [twilioCall]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -48,6 +61,25 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
     return name.substring(0, 2).toUpperCase();
   };
 
+  const toggleMute = () => {
+    if (twilioCall) {
+      const next = !twilioCall.isMuted();
+      twilioCall.mute(next);
+      setIsMuted(next);
+    } else {
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const endCall = () => {
+    try {
+      twilioCall?.disconnect();
+    } catch {
+      /* ignore */
+    }
+    onEndCall(notes, tags);
+  };
+
   return (
     <div className="flex h-full">
       {/* Left Panel - Call Info */}
@@ -60,9 +92,9 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
           <p className="text-sm text-muted-foreground mb-2">{phone}</p>
           <div className="flex items-center gap-2">
             {isOnHold ? (
-              <Badge variant="secondary">On Hold</Badge>
+              <Badge variant="secondary">En espera</Badge>
             ) : (
-              <Badge variant="default" className="bg-green-500">Active</Badge>
+              <Badge variant="default" className="bg-green-500">Activa</Badge>
             )}
             <span className="text-lg font-mono">{formatDuration(duration)}</span>
           </div>
@@ -74,18 +106,19 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
             <Button
               variant={isMuted ? 'default' : 'outline'}
               className="h-14"
-              onClick={() => setIsMuted(!isMuted)}
+              onClick={toggleMute}
             >
               {isMuted ? <MicOff className="h-5 w-5 mr-2" /> : <Mic className="h-5 w-5 mr-2" />}
-              {isMuted ? 'Unmute' : 'Mute'}
+              {isMuted ? 'Activar mic' : 'Silenciar'}
             </Button>
             <Button
               variant={isOnHold ? 'default' : 'outline'}
               className="h-14"
               onClick={() => setIsOnHold(!isOnHold)}
+              title={twilioCall ? 'Indicador local (hold en PSTN requiere conferencia en servidor)' : undefined}
             >
               {isOnHold ? <Play className="h-5 w-5 mr-2" /> : <Pause className="h-5 w-5 mr-2" />}
-              {isOnHold ? 'Resume' : 'Hold'}
+              {isOnHold ? 'Reanudar' : 'Espera'}
             </Button>
             <Button
               variant={isSpeaker ? 'default' : 'outline'}
@@ -93,14 +126,17 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
               onClick={() => setIsSpeaker(!isSpeaker)}
             >
               {isSpeaker ? <Volume2 className="h-5 w-5 mr-2" /> : <VolumeX className="h-5 w-5 mr-2" />}
-              Speaker
+              Altavoz
             </Button>
             <Button
               variant="outline"
               className="h-14"
+              type="button"
+              disabled
+              title="Transferencia en una siguiente fase (conferencia Twilio)"
             >
               <ArrowRightLeft className="h-5 w-5 mr-2" />
-              Transfer
+              Transferir
             </Button>
           </div>
           
@@ -108,20 +144,20 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
             variant="destructive"
             size="lg"
             className="w-full h-14"
-            onClick={() => onEndCall(notes, tags)}
+            onClick={endCall}
           >
             <PhoneOff className="h-5 w-5 mr-2" />
-            End Call
+            Colgar
           </Button>
         </div>
 
         {/* Quick Actions */}
         <div className="p-6">
-          <h3 className="text-sm font-medium mb-3">Quick Actions</h3>
+          <h3 className="text-sm font-medium mb-3">Acciones rápidas</h3>
           <div className="space-y-2">
             <Button variant="ghost" className="w-full justify-start" onClick={() => setActiveTab('notes')}>
               <StickyNote className="h-4 w-4 mr-2" />
-              Add Notes
+              Notas
             </Button>
           </div>
         </div>
@@ -132,10 +168,10 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <TabsList className="w-full justify-start rounded-none border-b h-12 bg-transparent p-0">
             <TabsTrigger value="info" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              Call Info
+              Detalle
             </TabsTrigger>
             <TabsTrigger value="notes" className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary">
-              Notes & Tags
+              Notas y etiquetas
             </TabsTrigger>
           </TabsList>
 
@@ -143,36 +179,42 @@ export function EnhancedActiveCall({ contact, phone, onEndCall }: EnhancedActive
             <TabsContent value="info" className="p-6 mt-0">
               <div className="space-y-4">
                 <Card className="p-4">
-                  <h3 className="text-sm font-medium mb-3">Call Details</h3>
+                  <h3 className="text-sm font-medium mb-3">Llamada</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Direction</span>
-                      <span>Outgoing</span>
+                      <span className="text-muted-foreground">Dirección</span>
+                      <span>Saliente</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Started</span>
-                      <span>{new Date().toLocaleTimeString()}</span>
+                      <span className="text-muted-foreground">Inicio</span>
+                      <span>{new Date().toLocaleTimeString('es-ES')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Duration</span>
+                      <span className="text-muted-foreground">Duración</span>
                       <span>{formatDuration(duration)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Status</span>
-                      <span>{isOnHold ? 'On Hold' : 'Active'}</span>
+                      <span className="text-muted-foreground">Estado</span>
+                      <span>{isOnHold ? 'En espera (local)' : 'En curso'}</span>
                     </div>
+                    {twilioCall && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Twilio</span>
+                        <span className="font-mono text-xs">{twilioCall.status()}</span>
+                      </div>
+                    )}
                   </div>
                 </Card>
 
                 <Card className="p-4">
-                  <h3 className="text-sm font-medium mb-3">Contact Information</h3>
+                  <h3 className="text-sm font-medium mb-3">Contacto</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Name</span>
+                      <span className="text-muted-foreground">Nombre</span>
                       <span>{contact}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Phone</span>
+                      <span className="text-muted-foreground">Teléfono</span>
                       <span>{phone}</span>
                     </div>
                   </div>

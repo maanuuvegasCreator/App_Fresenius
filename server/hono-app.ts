@@ -196,3 +196,14 @@ app.post("/voice", async (c) => {
   const res = await handleVoicePost(c.req.raw);
   return res;
 });
+
+/** Twilio RecordingStatusCallback (POST form). Responder 200 evita reintentos infinitos. */
+app.post("/voice/recording", async (c) => {
+  try {
+    const text = await c.req.text();
+    console.log("[TWILIO_RECORDING_STATUS]", text.slice(0, 800));
+  } catch {
+    /* ignore */
+  }
+  return c.body(null, 200);
+});

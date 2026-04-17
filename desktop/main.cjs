@@ -83,6 +83,13 @@ app.whenReady().then(() => {
   if (process.platform !== "darwin") {
     Menu.setApplicationMenu(null);
   }
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
+    if (permission === "media" || permission === "display-capture") {
+      callback(true);
+      return;
+    }
+    callback(false);
+  });
   installVercelProtectionBypass();
   createWindow();
   app.on("activate", () => {

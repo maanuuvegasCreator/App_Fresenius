@@ -18,6 +18,9 @@ Este repo es una **SPA con Vite**. El backend de **Twilio**, **Supabase** y **El
 | GET/POST | `/api/app-settings` | Ajustes en tabla `app_settings` |
 | POST | `/api/auth/mock-login` | Cookie `mock_agent_email` (mismas credenciales mock que Thinkia) |
 | POST | `/api/voice` | Webhook Twilio (TwiML + ruteo + ElevenLabs) |
+| POST | `/api/voice/recording` | Callback de estado de grabaciones (200 OK; logs) |
+
+**Marcador (Dashboard):** el front usa **`@twilio/voice-sdk`**: registro con `GET /api/token` y salientes vía `POST /api/voice` (TwiML App en Twilio debe apuntar a esa URL).
 
 Los archivos **`server/routing-store.ts`** y **`server/routing-events-store.ts`** se copiaron del proyecto Thinkia (flujos IVR + eventos; fallback a JSON bajo `data/` en desarrollo).
 
@@ -34,10 +37,15 @@ Copia `.env.example` a `.env` (local) y configura las mismas claves que en el de
 1. Intenta **POST `/api/auth/mock-login`** (cookie HttpOnly).
 2. Si falla, usa **Supabase Auth** en el navegador (`VITE_SUPABASE_*`).
 
+## Twilio Console (obligatorio para voz real)
+
+1. **TwiML App** → *Voice request URL* = `https://<tu-dominio>/api/voice` (POST).
+2. **Caller ID** verificado: variable `TWILIO_CALLER_ID` (o `TWILIO_FROM_NUMBER`).
+3. **Identidad del cliente** = email del agente normalizado (como en `GET /api/token`); debe coincidir con `INBOUND_AGENT_IDENTITIES` / mapa de ruteo si quieres llamadas entrantes al navegador.
+
 ## Próximos pasos sugeridos
 
-- Conectar **CallCenter**, **Historial**, **Analytics**, etc. a `fetch('/api/calls')` y resto de endpoints en lugar de mocks.
-- Añadir **webhooks de grabación** (`/api/voice/recording`) si los necesitas en este repo (rutas adicionales en `server/hono-app.ts`).
+- Activar historial real en listas: `VITE_USE_LIVE_CALLS=true` (por defecto el Dashboard sigue pudiendo usar demo de llamadas salvo que actives esto).
 - Revisión de **CORS** si el front y el API van en dominios distintos (`VITE_PUBLIC_API_URL`).
 
 Repositorio de referencia: [Thinkia_Call_Experience](https://github.com/maanuuvegasCreator/Thinkia_Centralita) (Next.js).
