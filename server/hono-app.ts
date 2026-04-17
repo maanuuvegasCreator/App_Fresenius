@@ -1,26 +1,41 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import twilio from "twilio";
+import { parseFrontendOrigins } from "./frontend-origins";
 import { getCallLogs } from "./twilio-call-logs";
 import { getAllAgents, updateAgentStatus } from "./availability-service";
 import { getCallerEmailFromRequest } from "./auth-context";
 import { createApiClient } from "./supabase-api";
 import { isMockAgentCredential } from "./mock-agents";
 import { handleVoicePost } from "./voice-post";
+import { centralitaTwilioRoutes } from "./centralita";
+import { issueTwilioVoiceAccessToken } from "./twilio-voice-token";
 
 export const app = new Hono().basePath("/api");
+
+const frontendOrigins = parseFrontendOrigins();
+const allowOpenCors = frontendOrigins.length === 0;
 
 app.use(
   "*",
   cors({
-    origin: "*",
-    allowMethods: ["GET", "POST", "PUT", "OPTIONS"],
+    origin: (origin) => {
+      if (allowOpenCors) return "*";
+      if (!origin) return frontendOrigins[0];
+      if (frontendOrigins.includes(origin)) return origin;
+      return null;
+    },
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "Cookie"],
     exposeHeaders: ["Set-Cookie"],
+    credentials: !allowOpenCors,
   })
 );
 
 app.get("/health", (c) => c.json({ ok: true, service: "thinkia-api", base: "/api" }));
+
+/** Centralita cloud Twilio: webhooks + TwiML IVR (sin CRM / sin DB externa en este módulo). */
+app.route("/twilio", centralitaTwilioRoutes);
 
 app.get("/calls", async (c) => {
   try {
@@ -71,50 +86,13 @@ app.post("/agents/status", async (c) => {
   }
 });
 
-app.options("/token", (c) => {
-  return c.body(null, 204, {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  });
-});
-
 app.get("/token", async (c) => {
-  const req = c.req.raw;
-  const userEmail = await getCallerEmailFromRequest(req);
-
-  if (!userEmail) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const AccessToken = twilio.jwt.AccessToken;
-  const VoiceGrant = AccessToken.VoiceGrant;
-  const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-  const twilioApiKey = process.env.TWILIO_API_KEY;
-  const twilioApiSecret = process.env.TWILIO_API_SECRET;
-  const outgoingApplicationSid = process.env.TWILIO_TWIML_APP_SID;
-
-  const identitySource = userEmail;
-  const identity = identitySource.replace(/[^a-zA-Z0-9-_]/g, "_");
-
-  if (!twilioAccountSid || !twilioApiKey || !twilioApiSecret || !outgoingApplicationSid) {
-    return c.json({ error: "Missing Twilio environment variables" }, 500);
-  }
-
   const pushCredentialSid = c.req.query("pushCredentialSid");
-  const voiceGrant = new VoiceGrant({
-    outgoingApplicationSid,
-    incomingAllow: true,
-    pushCredentialSid: pushCredentialSid || undefined,
-  });
-
-  const token = new AccessToken(twilioAccountSid, twilioApiKey, twilioApiSecret, { identity });
-  token.addGrant(voiceGrant);
-
-  c.header("Access-Control-Allow-Origin", "*");
-  c.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  return c.json({ identity, token: token.toJwt() });
+  const result = await issueTwilioVoiceAccessToken(c.req.raw, pushCredentialSid);
+  if (!result.ok) {
+    return c.json({ error: result.error }, result.status);
+  }
+  return c.json({ identity: result.identity, token: result.token });
 });
 
 app.get("/numbers", async (c) => {

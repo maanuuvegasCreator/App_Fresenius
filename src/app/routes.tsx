@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { Login } from './pages/Login';
 import { CallCenter } from './pages/CallCenter';
+import { Dashboard } from './pages/Dashboard';
 import { TeamDirectory } from './pages/TeamDirectory';
 import { Activity } from './pages/Activity';
 import { Teams } from './pages/Teams';
@@ -24,6 +25,14 @@ export const router = createBrowserRouter([
     element: (
       <MainLayout>
         <CallCenter />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/agent-desk',
+    element: (
+      <MainLayout>
+        <Dashboard />
       </MainLayout>
     ),
   },

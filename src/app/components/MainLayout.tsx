@@ -11,12 +11,15 @@ import {
   ChevronDown,
   BarChart3,
   Circle,
-  BookOpen
+  BookOpen,
+  Headset,
 } from 'lucide-react';
 import { cn } from './ui/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Button } from './ui/button';
 import logoThinkia from '../../imports/Logo_Thinkia_Light.svg';
+import { DashboardEscalationsProvider } from '@/context/DashboardEscalationsContext';
+import { DashboardSocketBridge } from './DashboardSocketBridge';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -27,6 +30,11 @@ const menuItems = [
     icon: Phone,
     label: 'Centro de Llamadas',
     path: '/dashboard',
+  },
+  {
+    icon: Headset,
+    label: 'Marcador Twilio',
+    path: '/agent-desk',
   },
   {
     icon: BookOpen,
@@ -69,8 +77,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
 
   const isActivePath = (path: string) => {
-    if (path === '/dashboard') {
-      return location.pathname === '/dashboard';
+    if (path === '/dashboard' || path === '/agent-desk') {
+      return location.pathname === path;
     }
     return location.pathname.startsWith(path);
   };
@@ -93,6 +101,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   const currentStatusConfig = getStatusConfig(userStatus);
 
   return (
+    <DashboardEscalationsProvider>
+      <DashboardSocketBridge />
     <div className="size-full flex bg-background">
       {/* Main Sidebar */}
       <div className="w-64 min-w-64 border-r flex flex-col bg-white flex-shrink-0">
@@ -224,5 +234,6 @@ export function MainLayout({ children }: MainLayoutProps) {
         {children}
       </div>
     </div>
+    </DashboardEscalationsProvider>
   );
 }

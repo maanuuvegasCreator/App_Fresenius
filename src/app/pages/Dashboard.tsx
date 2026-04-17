@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDashboardEscalations } from '@/context/DashboardEscalationsContext';
 import { Phone, Users, History, X, BarChart3 } from 'lucide-react';
-import type { Call } from '@twilio/voice-sdk';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Dialpad } from '../components/Dialpad';
 import { EnhancedActiveCall } from '../components/EnhancedActiveCall';
+import { IncomingCallPanel } from '../components/IncomingCallPanel';
 import { ContactList } from '../components/ContactList';
 import { CallHistory } from '../components/CallHistory';
 import { StatusSelector } from '../components/StatusSelector';
@@ -13,8 +14,9 @@ import { fetchCalls } from '@/lib/api-client';
 import { DEMO_BACKEND_CALLS } from '@/lib/demo-backend-calls';
 import { buildContactsFromCalls, mapToHistoryCalls } from '@/lib/call-mappers';
 import type { BackendCall } from '@/types/backend';
-import { useTwilioVoice } from '@/hooks/useTwilioVoice';
+import { useTwilioClient } from '@/hooks/useTwilioClient';
 import { toE164 } from '@/lib/phone-e164';
+import { findMockPatientByPhone } from '@/lib/mock-patients';
 
 const USE_LIVE_CALLS = import.meta.env.VITE_USE_LIVE_CALLS === 'true';
 
@@ -65,19 +67,68 @@ function contactsFromApi(calls: BackendCall[]): DashboardContact[] {
 }
 
 export function Dashboard() {
-  const voice = useTwilioVoice();
+  const voice = useTwilioClient();
+  const { getEscalationForCallSid, clearEscalationForCallSid } = useDashboardEscalations();
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [isInCall, setIsInCall] = useState(false);
   const [activeContact, setActiveContact] = useState('');
   const [activePhone, setActivePhone] = useState('');
+  const [callDirection, setCallDirection] = useState<'incoming' | 'outgoing'>('outgoing');
   const [activeView, setActiveView] = useState<'dialpad' | 'contacts' | 'history'>('dialpad');
   const [userStatus, setUserStatus] = useState<UiStatus>('available');
   const [rawCalls, setRawCalls] = useState<BackendCall[]>(() =>
     USE_LIVE_CALLS ? [] : DEMO_BACKEND_CALLS
   );
-  const [twilioCall, setTwilioCall] = useState<Call | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [dialError, setDialError] = useState<string | null>(null);
+
+  const isInCall = !!voice.activeCall;
+
+  const incomingFrom = voice.incoming?.parameters?.From ?? '';
+  const incomingCallSid = voice.incoming?.parameters?.CallSid;
+  const incomingPatient = useMemo(() => findMockPatientByPhone(incomingFrom), [incomingFrom]);
+  const iaEscalationForIncoming = useMemo(
+    () => getEscalationForCallSid(incomingCallSid),
+    [getEscalationForCallSid, incomingCallSid]
+  );
+  const hadActiveCall = useRef(false);
+
+  useEffect(() => {
+    const on = !!voice.activeCall;
+    if (hadActiveCall.current && !on) {
+      setActiveContact('');
+      setActivePhone('');
+      setCallDirection('outgoing');
+    }
+    hadActiveCall.current = on;
+  }, [voice.activeCall]);
+
+  useEffect(() => {
+    const call = voice.activeCall;
+    if (!call) return;
+    const sid = typeof call.parameters?.CallSid === 'string' ? call.parameters.CallSid : '';
+    if (!sid) return;
+    const onDisconnect = () => clearEscalationForCallSid(sid);
+    call.on('disconnect', onDisconnect);
+    return () => {
+      call.off('disconnect', onDisconnect);
+    };
+  }, [voice.activeCall, clearEscalationForCallSid]);
+
+  useEffect(() => {
+    const inc = voice.incoming;
+    if (!inc) return;
+    const sid = typeof inc.parameters?.CallSid === 'string' ? inc.parameters.CallSid : '';
+    if (!sid) return;
+    const clearEsc = () => clearEscalationForCallSid(sid);
+    inc.on('cancel', clearEsc);
+    inc.on('reject', clearEsc);
+    inc.on('disconnect', clearEsc);
+    return () => {
+      inc.off('cancel', clearEsc);
+      inc.off('reject', clearEsc);
+      inc.off('disconnect', clearEsc);
+    };
+  }, [voice.incoming, clearEscalationForCallSid]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,20 +149,6 @@ export function Dashboard() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!twilioCall) return;
-    const onDisconnect = () => {
-      setTwilioCall(null);
-      setIsInCall(false);
-      setActiveContact('');
-      setActivePhone('');
-    };
-    twilioCall.on('disconnect', onDisconnect);
-    return () => {
-      twilioCall.off('disconnect', onDisconnect);
-    };
-  }, [twilioCall]);
-
   const historyRows = useMemo(() => rowsFromCalls(rawCalls), [rawCalls]);
   const contactRows = useMemo(() => contactsFromApi(rawCalls), [rawCalls]);
 
@@ -122,11 +159,10 @@ export function Dashboard() {
     setConnecting(true);
     try {
       const e164 = toE164(raw);
-      const call = await voice.connect(e164);
-      setTwilioCall(call);
+      setCallDirection('outgoing');
+      await voice.connect(e164);
       setActiveContact(name || raw);
       setActivePhone(e164);
-      setIsInCall(true);
       setPhoneNumber('');
     } catch (e) {
       setDialError(e instanceof Error ? e.message : 'No se pudo iniciar la llamada');
@@ -136,15 +172,19 @@ export function Dashboard() {
   };
 
   const handleEndCall = (_notes: string, _tags: string[]) => {
-    try {
-      twilioCall?.disconnect();
-    } catch {
-      /* ignore */
-    }
-    setTwilioCall(null);
-    setIsInCall(false);
+    voice.hangup();
     setActiveContact('');
     setActivePhone('');
+    setCallDirection('outgoing');
+  };
+
+  const handleAcceptIncoming = () => {
+    const from = incomingFrom;
+    const patient = findMockPatientByPhone(from);
+    setCallDirection('incoming');
+    setActiveContact(patient?.fullName || 'Entrante');
+    setActivePhone(from || '—');
+    voice.acceptIncoming();
   };
 
   const handleClearInput = () => {
@@ -157,7 +197,9 @@ export function Dashboard() {
         <EnhancedActiveCall
           contact={activeContact}
           phone={activePhone}
-          twilioCall={twilioCall}
+          twilioCall={voice.activeCall}
+          callDirection={callDirection}
+          isRecording={voice.isRecording}
           onEndCall={handleEndCall}
         />
       </div>
@@ -166,32 +208,18 @@ export function Dashboard() {
 
   return (
     <div className="relative size-full flex bg-background">
-      {voice.incoming ? (
-        <div className="absolute inset-x-0 bottom-0 z-50 border-t bg-background/95 p-4 shadow-lg backdrop-blur">
-          <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium">Llamada entrante</p>
-              <p className="text-xs text-muted-foreground">Twilio Voice</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => voice.rejectIncoming()}>
-                Rechazar
-              </Button>
-              <Button
-                onClick={() => {
-                  const c = voice.acceptIncoming();
-                  if (!c) return;
-                  setTwilioCall(c);
-                  setIsInCall(true);
-                  setActiveContact('Entrante');
-                  setActivePhone(c.parameters?.From || '');
-                }}
-              >
-                Aceptar
-              </Button>
-            </div>
-          </div>
-        </div>
+      {voice.incoming && !voice.activeCall ? (
+        <IncomingCallPanel
+          callerNumber={incomingFrom}
+          patient={incomingPatient}
+          iaEscalation={iaEscalationForIncoming}
+          onAccept={handleAcceptIncoming}
+          onReject={() => {
+            const sid = voice.incoming?.parameters?.CallSid;
+            if (typeof sid === 'string') clearEscalationForCallSid(sid);
+            voice.rejectIncoming();
+          }}
+        />
       ) : null}
 
       {/* Sidebar */}

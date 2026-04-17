@@ -38,13 +38,18 @@ export async function fetchNumbers() {
   return (Array.isArray(data.numbers) ? data.numbers : []) as import("@/types/backend").TwilioNumber[];
 }
 
-/** JWT y identity para Twilio Voice (navegador / Electron). */
-export async function fetchVoiceToken(): Promise<{ token: string; identity: string }> {
-  const res = await apiFetch("/api/token", { cache: "no-store" });
+/** JWT y identity para Twilio Voice (navegador / Electron) — ruta centralita. */
+export async function fetchTwilioVoiceToken(): Promise<{ token: string; identity: string }> {
+  const res = await apiFetch("/api/twilio/token", { cache: "no-store" });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || res.statusText);
   const token = (data as { token?: string }).token;
   const identity = (data as { identity?: string }).identity;
   if (!token || !identity) throw new Error("Respuesta de token inválida");
   return { token, identity };
+}
+
+/** @deprecated Usa {@link fetchTwilioVoiceToken} (GET `/api/twilio/token`). */
+export async function fetchVoiceToken(): Promise<{ token: string; identity: string }> {
+  return fetchTwilioVoiceToken();
 }

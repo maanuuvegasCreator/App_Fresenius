@@ -15,9 +15,19 @@ interface EnhancedActiveCallProps {
   onEndCall: (notes: string, tags: string[]) => void;
   /** Si existe, mute y colgar controlan la llamada WebRTC real. */
   twilioCall?: Call | null;
+  callDirection?: "incoming" | "outgoing";
+  /** Grabación en servidor Twilio (parámetro TwiML / mensaje SDK). */
+  isRecording?: boolean;
 }
 
-export function EnhancedActiveCall({ contact, phone, onEndCall, twilioCall }: EnhancedActiveCallProps) {
+export function EnhancedActiveCall({
+  contact,
+  phone,
+  onEndCall,
+  twilioCall,
+  callDirection = "outgoing",
+  isRecording = false,
+}: EnhancedActiveCallProps) {
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaker, setIsSpeaker] = useState(false);
@@ -90,12 +100,21 @@ export function EnhancedActiveCall({ contact, phone, onEndCall, twilioCall }: En
           </Avatar>
           <h2 className="text-xl font-semibold mb-1">{contact}</h2>
           <p className="text-sm text-muted-foreground mb-2">{phone}</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isOnHold ? (
               <Badge variant="secondary">En espera</Badge>
             ) : (
               <Badge variant="default" className="bg-green-500">Activa</Badge>
             )}
+            {isRecording ? (
+              <Badge variant="destructive" className="gap-1 font-normal">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+                Grabando
+              </Badge>
+            ) : null}
             <span className="text-lg font-mono">{formatDuration(duration)}</span>
           </div>
         </div>
@@ -183,7 +202,11 @@ export function EnhancedActiveCall({ contact, phone, onEndCall, twilioCall }: En
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Dirección</span>
-                      <span>Saliente</span>
+                      <span>{callDirection === "incoming" ? "Entrante" : "Saliente"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Grabación</span>
+                      <span>{isRecording ? "Servidor (Twilio)" : "—"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Inicio</span>
