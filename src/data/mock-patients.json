@@ -1,0 +1,39 @@
+{
+  "patients": [
+    {
+      "id": "mock-001",
+      "fullName": "Paciente Demo Fresenius",
+      "phoneE164": "+34600000001",
+      "alternatePhones": ["+34600000002"],
+      "mrn": "MRN-DEMO-001",
+      "center": "Centro Demo",
+      "dateOfBirth": "1975-06-15",
+      "orders": [
+        {
+          "id": "ord-1",
+          "date": "2026-03-01",
+          "description": "Material dialisis (simulado)",
+          "status": "En curso"
+        },
+        {
+          "id": "ord-2",
+          "date": "2026-02-10",
+          "description": "Consulta telefónica",
+          "status": "Completado"
+        }
+      ],
+      "clinicalNote": "Datos ficticios solo para pruebas de UI en el marcador."
+    },
+    {
+      "id": "mock-002",
+      "fullName": "Segundo Paciente Mock",
+      "phoneE164": "+34600111222",
+      "alternatePhones": [],
+      "mrn": "MRN-DEMO-002",
+      "center": "Centro Norte (demo)",
+      "dateOfBirth": "1982-11-22",
+      "orders": [],
+      "clinicalNote": ""
+    }
+  ]
+}
